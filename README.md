@@ -1,12 +1,8 @@
----
-description: AWS Developer associate certification (DVA-C02 exam) study materials.
----
-
 # 📚 AWS DVA study scope
 
-***
+AWS Developer associate certification (DVA-C02 exam) study materials.
 
-<mark style="color:blue;">These materials reflect my personal take on the study content I've covered in FreeCodeCamp, Udemy, and Skillbuilder, whitepapers. I reviewed, summarized, and added my own notes for my personal clarity and understanding. Links to the original sources and other materials I found useful are below</mark> :arrow\_down:
+_These materials reflect my personal take on the study content I've covered in FreeCodeCamp, Udemy, and Skillbuilder, whitepapers. I reviewed, summarized, and added my own notes for my personal clarity and understanding. Links to the original sources and other materials I found useful are below_ :arrow\_down:
 
 ***
 
@@ -26,7 +22,7 @@ The AWS Certified Developer - Associate (DVA-C02) exam is intended for individua
 * [FreeCodeCamp](https://www.youtube.com/watch?v=TTcyhhH2FWE\&t=2146s)
 * [Practice Exams](https://portal.tutorialsdojo.com/courses/aws-certified-developer-associate-practice-exams/)
 
-Hands-on
+#### Hands-on
 
 * [AWS workshops](https://awsworkshop.io/)
 * [AWS Ramp-up guides](https://aws.amazon.com/training/ramp-up-guides/)
