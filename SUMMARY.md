@@ -11,7 +11,7 @@
 * [CloudFront](in-scope-aws-services-and-features/cloudfront.md)
 * [Containers](in-scope-aws-services-and-features/containers.md)
 
-## Development with AWS Services&#x20;
+## Development with AWS Services
 
 * [Compute: EC2](development-with-aws-services/compute-ec2/README.md)
   * [EC2 Storage](development-with-aws-services/compute-ec2/ec2-storage.md)
@@ -23,7 +23,7 @@
     * [Page](development-with-aws-services/serverless/lambda/page.md)
   * [API Gateway](development-with-aws-services/serverless/api-gateway.md)
 
-## Security&#x20;
+## Security
 
 * [IAM](security/iam/README.md)
   * [Advanced Identity](security/iam/advanced-identity.md)
@@ -31,15 +31,13 @@
 * [Encryption](security/encryption.md)
 * [Untitled](security/untitled.md)
 
-## Deployment&#x20;
+## Deployment
 
 * [Developer Tools](deployment/developer-tools.md)
 * [CDK](deployment/cdk.md)
 * [CloudFormation](deployment/cloudformation.md)
 
-## Troubleshooting and Optimization&#x20;
-
-***
+## Troubleshooting and Optimization
 
 * [Integrations](integrations/README.md)
   * [Step Functions](integrations/step-functions.md)

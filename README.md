@@ -2,11 +2,21 @@
 
 AWS Developer associate certification (DVA-C02 exam) study materials.
 
-_These materials reflect my personal take on the study content I've covered in FreeCodeCamp, Udemy, and Skillbuilder, whitepapers. I reviewed, summarized, and added my own notes for my personal clarity and understanding. Links to the original sources and other materials I found useful are below_ :arrow\_down:
+This repository content is organised by exam domains:&#x20;
+
+• Domain 1: Development with AWS Services (32% of scored content)&#x20;
+
+• Domain 2: Security (26% of scored content)&#x20;
+
+• Domain 3: Deployment (24% of scored content)&#x20;
+
+• Domain 4: Troubleshooting and Optimization (18% of scored content)
+
+_This repository contains my summaries, notes, and use cases based on materials from FreeCodeCamp, Udemy, Skillbuilder, and AWS whitepapers. All sources and links are included below_ :arrow\_down:
 
 ***
 
-The AWS Certified Developer - Associate (DVA-C02) exam is intended for individuals who perform a developer role. The exam validates a candidate’s ability to demonstrate proficiency in developing, testing, deploying, and debugging AWS Cloud-based apsplications.
+The AWS Certified Developer - Associate (DVA-C02) exam is intended for individuals who perform a developer role. The exam validates a candidate’s ability to demonstrate proficiency in developing, testing, deploying, and debugging AWS Cloud-based applications.
 
 • Develop and optimize applications on AWS.&#x20;
 
