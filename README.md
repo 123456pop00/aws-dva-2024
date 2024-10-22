@@ -1,22 +1,17 @@
 # 📚 AWS DVA study scope
 
 AWS Developer associate certification (DVA-C02 exam) study materials.
+This repository content is organised by exam domains: 
+- Domain 1: Development with AWS Services (32% of scored content) 
+- Domain 2: Security (26% of scored content) 
+- Domain 3: Deployment (24% of scored content) 
+- Domain 4: Troubleshooting and Optimization (18% of scored content)
 
-This repository content is organised by exam domains:&#x20;
-
-• Domain 1: Development with AWS Services (32% of scored content)&#x20;
-
-• Domain 2: Security (26% of scored content)&#x20;
-
-• Domain 3: Deployment (24% of scored content)&#x20;
-
-• Domain 4: Troubleshooting and Optimization (18% of scored content)
-
-_This repository contains my summaries, notes, and use cases based on materials from FreeCodeCamp, Udemy, Skillbuilder, and AWS whitepapers. All sources and links are included below_ :arrow\_down:
+>_This repository contains my summaries, notes, and use cases based on materials from FreeCodeCamp, Udemy, Skillbuilder, and AWS whitepapers. All sources and links are included below_.
 
 ***
 
-The AWS Certified Developer - Associate (DVA-C02) exam is intended for individuals who perform a developer role. The exam validates a candidate’s ability to demonstrate proficiency in developing, testing, deploying, and debugging AWS Cloud-based applications.
+The AWS Certified Developer - Associate (DVA-C02) exam is intended for individuals who perform a developer role. The exam validates a candidate’s ability to demonstrate proficiency in developing, testing, deploying, and debugging AWS Cloud-based apsplications.
 
 • Develop and optimize applications on AWS.&#x20;
 
@@ -29,6 +24,8 @@ The AWS Certified Developer - Associate (DVA-C02) exam is intended for individua
 ### Resources
 
 * [AWS Skillbuilder](https://explore.skillbuilder.aws/learn/signin)
+* [Exam Prep Standard Course: AWS Certified Developer ](https://explore.skillbuilder.aws/learn/course/internal/view/elearning/14724/exam-prep-standard-course-aws-certified-developer-associate-dva-c02) 
+
 * [FreeCodeCamp](https://www.youtube.com/watch?v=TTcyhhH2FWE\&t=2146s)
 * [Practice Exams](https://portal.tutorialsdojo.com/courses/aws-certified-developer-associate-practice-exams/)
 
