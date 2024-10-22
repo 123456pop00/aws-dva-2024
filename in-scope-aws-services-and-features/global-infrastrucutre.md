@@ -7,7 +7,7 @@ description: >-
 # Global Infrastrucutre
 
 * Regions (34) -> AWS has largest infrastructure footprint of any cloud provider (31% market share).
-* AZs(108). Deploying in at least 2 AZs is a best practice to ensure redundancy / failover. AZs are located far from each other to ensure disaster recovery and ensures that issues in one AZ do not affect others.  AZ consist of one or multiple physical data centers that have isolated power, networking.
+* Availability Zones (108) -> Deploying in at least 2 AZs is a best practice to ensure redundancy / failover. AZs are located far from each other to ensure disaster recovery and ensures that issues in one AZ do not affect others.  AZ consist of one or multiple physical data centers that have isolated power, networking.
 * Edge locations / PoP (600+) ->  'like :pizza: delivery :truck:' don't run applications but cache common requests. Ex: CloudFront CDN uses to store copies of content closed to end-user for high availa­bility.
 * Local Zones -> 'like a :pizza: shop'  to support low latency sensitive applications in geographic proximity to users, core purpose is to achieve single-digit millisecond latencies. We extend  VPC to more locations, with local zone subnet, for example, we have N.virginia region with 3 AZs and extend it by defining a Local Zone.&#x20;
 
