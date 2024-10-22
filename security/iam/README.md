@@ -1,10 +1,50 @@
+---
+description: web service that helps securely control access to AWS services & resources.
+icon: lock-keyhole
+---
+
 # IAM
 
-{% hint style="info" %}
-**Good to know:** you can embed a Storybook canvas by simple pasting the canvas link and hitting enter.
-{% endhint %}
+* **User**_**:**_ can belong to multiple group or don't have to belong to a group(not best practice).
+* **Groups**_**:**_ can only contain users not other groups.
 
-An Icon is a piece of visual element, but we must ensure its accessibility while using it. It can have **2 purposes**:
+## IAM Policies ( Group, Inline)
 
-* _**decorative only**_: for example, it illustrates a label next to it. We must ensure that it is ignored by screen readers, by setting aria-hidden attribute (ex: `<Icon icon="check" aria-hidden />`)
-* _**non-decorative**_: it means that it delivers information. For example, an icon as only child in a button. The meaning can be obvious visually, but it must have a proper text alternative via `aria-label` for screen readers. (ex:`<Icon icon="print" aria-label="Print this document" />`)
+* Policies can be attached to IAM users, groups, or roles. Give broad permissions.
+* Granular <mark style="color:red;">least-privilege</mark>. Never give more permissions than needed.
+* Users inherit policies from groups they're in.
+* AWS evaluates <mark style="color:red;">permissions based on the most restrictive policy</mark>. If the  IAM policy allows access but the bucket policy denies it, the user will be denied access.
+* A deny by default"  evaluating model for permission, aka deny by default.
+
+
+
+```mermaid
+graph LR
+  A[Decision starts at 'Deny'] --> B([Evaluate All Available Policies])
+  B --> C{Explicit Deny? }
+  C -->|Yes| D[Final decison=Deny]
+  C -->|No| F{Explicit Allow?}
+ 
+ 
+  F -->|Yes| K[Final decision=Allow]
+  F -->|No| E[Final decison=Deny]
+
+
+
+
+
+```
+
+* Group policies allow for easy control of permissions for all users in that group simultaneously.
+* Inline policies - attached directly to a single user.  Good practice for Highly Specific Access or Temp Access requirements.
+* Create & attach at Group level.
+* Define permissions for Users. Can define specific to service -> Actions -> resources.&#x20;
+
+{% embed url="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements.html" %}
+
+#### Achieving Fine Grained /Layered security &#x20;
+
+Use IAM and bucket policies. IAM policy for DevOps group can grant access to the S3 bucket action (`"Action": "s3:GetObject",`) but Bucket policy (_also a JSON documents that specify permissions at the bucket level_) can enforce additional restrictions on specific objects / certain documents.
+
+
+
