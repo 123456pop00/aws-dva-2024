@@ -15,6 +15,8 @@ icon: lock-keyhole
 * AWS evaluates <mark style="color:red;">permissions based on the most restrictive policy</mark>. If the  IAM policy allows access but the bucket policy denies it, the user will be denied access.
 * A "deny by default"  model for permission:
 
+![](https://documents.lucid.app/documents/8ade9c53-cfe8-4fb1-9954-7f891d1253a9/pages/0\_0?a=858\&x=658\&y=-459\&w=903\&h=1277\&store=1\&accept=image%2F\*\&auth=LCA%20eabbe31709ae34639da9faaf36956bcbccf1643dfe1b3b311bc2f0ed8832f125-ts%3D1729670340)
+
 
 
 ```mermaid
