@@ -65,11 +65,13 @@ description: >-
 
 1. Multi-AZ RDS setup [Add rds mermaid example]
 ```mermaid
+
   graph TD
 Client --> Route53[Route 53] --> LoadBalancer[Load Balancer] --> A & B & C
 subgraph A[AZ-eu-north-1a]
 
 subgraph ASG1
+
   EC2:instance_b
   EC2:instance_c
   EC2:instance_a
@@ -92,7 +94,5 @@ EC2:instance_g
 end
 
 end
-  
-
+ 
 ```
-
