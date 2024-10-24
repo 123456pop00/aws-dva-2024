@@ -29,7 +29,7 @@
   * [AWS STS](security/iam/advanced-identity.md)
   * [Cognito](security/iam/cognito.md)
 * [Encryption](security/encryption.md)
-* [Untitled](security/untitled.md)
+* [Useful CLI](security/untitled.md)
 
 ## Deployment
 

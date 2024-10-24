@@ -26,6 +26,11 @@ The AWS Certified Developer - Associate (DVA-C02) exam is intended for individua
 * [FreeCodeCamp](https://www.youtube.com/watch?v=TTcyhhH2FWE\&t=2146s)
 * [Practice Exams](https://portal.tutorialsdojo.com/courses/aws-certified-developer-associate-practice-exams/)
 * [https://aws.amazon.com/architecture/icons/](https://aws.amazon.com/architecture/icons/)&#x20;
+* [https://explore.skillbuilder.aws/learn/course/internal/view/elearning/106/introduction-to-containers?da=sec\&sec=prep](https://explore.skillbuilder.aws/learn/course/internal/view/elearning/106/introduction-to-containers?da=sec\&sec=prep)
+* [https://explore.skillbuilder.aws/learn/course/internal/view/elearning/37/introduction-to-serverless-development?da=sec\&sec=prep](https://explore.skillbuilder.aws/learn/course/internal/view/elearning/37/introduction-to-serverless-development?da=sec\&sec=prep)
+* [https://explore.skillbuilder.aws/learn/course/internal/view/elearning/57/amazon-elastic-kubernetes-service-eks-primer?da=sec\&sec=prep](https://explore.skillbuilder.aws/learn/course/internal/view/elearning/57/amazon-elastic-kubernetes-service-eks-primer?da=sec\&sec=prep)
+* [https://explore.skillbuilder.aws/learn/course/internal/view/elearning/2000/getting-started-with-devops-on-aws?da=sec\&sec=prep](https://explore.skillbuilder.aws/learn/course/internal/view/elearning/2000/getting-started-with-devops-on-aws?da=sec\&sec=prep)
+* [https://explore.skillbuilder.aws/learn/course/internal/view/elearning/17354/deploying-applications-with-aws-elastic-beanstalk](https://explore.skillbuilder.aws/learn/course/internal/view/elearning/17354/deploying-applications-with-aws-elastic-beanstalk)
 
 #### Hands-on
 

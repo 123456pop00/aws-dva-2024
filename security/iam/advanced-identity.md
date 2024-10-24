@@ -1,19 +1,15 @@
 # AWS STS
 
-Allows to grant limited and temporary access to AWS resources (up to 1 hour).&#x20;
+Service to grant limited-privileges credentials and temporary access to AWS resources (up to 1 hour).&#x20;
 
-• AssumeRole: Assume roles within your account or cross account\
-• AssumeRoleWithSAML: return credentials for users logged with SAML\
-• AssumeRoleWithWebIdentity
+AWS STS supports AWS CloudTrail, a service that records AWS calls for your AWS account and delivers log files to an Amazon S3 bucket.
 
-• return creds for users logged with an IdP (Facebook Login, Google Login, OIDC compatible...) • AWS recommends against using this, and using Cognito Identity Pools instead
+### API Actions
 
-• GetSessionToken: for MFA, from a user or AWS account root user\
-• GetFederationToken: obtain temporary creds for a federated user\
-• GetCallerIdentity: return details about the IAM user or role used in the API call\
-• DecodeAuthorizationMessage: decode error message when an AWS API is denied
+**AssumeRole:** When you create a role, you create two policies: a role trust policy that specifies _who_ can assume the role, and a permissions policy that specifies _what_ can be done with the role
 
-NOT FOR DISTRIBUTION © Stephane Maarek www.datacumulus.com
+**AssumeRoleWithSAML:** return credentials for users logged with SAML\
+
 
 {% hint style="info" %}
 

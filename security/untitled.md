@@ -1,12 +1,16 @@
-# Untitled
+# Useful CLI
 
-##
+Check current identity&#x20;
 
-{% hint style="info" %}
+```sh
+aws sts get-caller-identity
+```
 
-{% endhint %}
+Generate temp credential for local testing, 3rd party access, Multi-Factor Authentication (MFA) Enforcement
 
-```javascript
+```bash
+aws sts get-session-token --duration-seconds 3600
+
 ```
 
 ##
