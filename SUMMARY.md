@@ -26,7 +26,7 @@
 ## Security
 
 * [IAM](security/iam/README.md)
-  * [Advanced Identity](security/iam/advanced-identity.md)
+  * [AWS STS](security/iam/advanced-identity.md)
   * [Cognito](security/iam/cognito.md)
 * [Encryption](security/encryption.md)
 * [Untitled](security/untitled.md)

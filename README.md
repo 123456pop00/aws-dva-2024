@@ -25,6 +25,7 @@ The AWS Certified Developer - Associate (DVA-C02) exam is intended for individua
 * [Exam Prep Standard Course: AWS Certified Developer](https://explore.skillbuilder.aws/learn/course/internal/view/elearning/14724/exam-prep-standard-course-aws-certified-developer-associate-dva-c02)
 * [FreeCodeCamp](https://www.youtube.com/watch?v=TTcyhhH2FWE\&t=2146s)
 * [Practice Exams](https://portal.tutorialsdojo.com/courses/aws-certified-developer-associate-practice-exams/)
+* [https://aws.amazon.com/architecture/icons/](https://aws.amazon.com/architecture/icons/)&#x20;
 
 #### Hands-on
 
