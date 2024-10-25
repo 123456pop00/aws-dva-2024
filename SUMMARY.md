@@ -28,6 +28,7 @@
 * [IAM](security/iam/README.md)
   * [AWS STS](security/iam/advanced-identity.md)
   * [Cognito](security/iam/cognito.md)
+  * [AWS Directory services](security/iam/aws-directory-services.md)
 * [Encryption](security/encryption.md)
 * [Useful CLI](security/untitled.md)
 

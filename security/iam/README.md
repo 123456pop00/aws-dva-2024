@@ -11,14 +11,15 @@ icon: lock-keyhole
 
 :exclamation: **Identity-based:** policies attached to users, groups, roles to grant THEM permission to perform actions on AWS resources.&#x20;
 
-Identity-based types:
-
 * **AWS Managed Policies**: These are predefined policies created and maintained by AWS, when you create a Cloud9 role, AWS may automatically attach an AWS managed policy for you.
-* **Customer Managed Policies**: These are policies that you create and manage yourself.&#x20;
+* **Customer Managed Policies**: These are policies that you create and manage yourself, you have rollback and version control.
 
 :exclamation: **Resource-based:** policies attached directly to resource policies like S3 bucket or Lambda function, AWSServiceRoleForAWSCloud9. They define **Trust Entities that can assume the role.**
 
 * **Trust Policies**: This is a specific type of resource-based policy that is attached to an IAM role. It defines the **trust relationships** and specifies which identities (users, services, or accounts) are allowed to assume the role.
+
+
+
 * **IAM Credentials report:** lists all account's users and the status of their credentials. Account level report.
 * **IAM Access Advisor:** breaks down the permissions granted to a user, role, or group and when those services were last accessed. User level report that shows the **"Last Accessed"** time for each service, indicating when that service was last used by the entity.
 * IAM Access Analyser:&#x20;
@@ -39,7 +40,9 @@ Identity-based types:
 * Granular principle of <mark style="color:red;">least privilege</mark>. Never grant more permissions than needed.
 * Users inherit policies from groups they're in.
 * AWS evaluates <mark style="color:red;">permissions based on the most restrictive policy</mark>. If the IAM policy allows access but the bucket policy denies it, the user will be denied access.
-* A "deny by default" model for permission:
+* AWS IAM policy evaluation, <mark style="color:red;">**explicit**</mark> <mark style="color:red;">**DENY  always takes precedence over allows.**</mark>
+* <mark style="color:red;">**Default Deny**</mark><mark style="color:red;">:</mark> If no allow or deny is found, access is denied by default.
+* A "deny by default" model for permission
 
 ```mermaid
 graph LR
@@ -58,17 +61,232 @@ graph LR
 
 ```
 
-* Group policies allow for easy control of permissions for all users in that group simultaneously.
-* Inline policies - attached directly to a single user. Good practice for Highly Specific Access or Temp Access requirements.
-* Define permissions for Users. Can define specific to service -> Actions -> resources.
+* **Group** policies allow for easy control of permissions for all users in that group simultaneously.
+* **Inline** policies - attached directly to a single principal(user, group, or role), no version control, rollback. Good practice for Highly Specific Access or Temp Access requirements. Policies maintain a strict one-to-one relationship between a policy and an identity. They are deleted when you delete the identity.
+
+### Achieving Fine Grained Access / Layered security
+
+When evaluating if a principal can perform an action IAM policies will be evaluated in combination with S3 bucket policies attached to resource. Such as evaluate both IAM and bucket policies.
+
+1. &#x20;IAM policy for Devs group can grant explicit "Allow" access to the S3 bucket action (`"Action": "s3:GetObject"`for all objects, but Bucket policy (_also a JSON documents specifies permissions at the bucket level_) can enforce additional restrictions on specific objects / certain documents with explicit "Deny" = <mark style="color:red;">**DENY**</mark>
+
+<details>
+
+<summary>Layered Access Control</summary>
+
+Access to the sensitive documents will be denied due to the explicit deny in the bucket policy.
+
+```json
+//Bucket policy
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": [
+        "arn:aws:s3:::mybucketname/payemnts/sensitive-document-1.txt",
+        "arn:aws:s3:::mybucketname/payemnts/sensitive-document-2.txt"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::mybucketname/*"
+    }
+  ]
+}
+
+```
+
+
+
+</details>
+
+
+
+2. IAM Policy for XYZRole is empty (meaning it does not explicitly allow or deny any actions in S3) + Bucket policy with explicit RWX permission for XYZRole configured with explicit "Allow" = <mark style="color:green;">**ALLOW**</mark>
+
+AWS evaluates permissions based on the following ->Explicit Deny? No -> Explicit Allow -> Yes, inside bucket policy -> Grants permission if there is no conflicting deny.
+
+Even if the IAM policy does not provide permissions, the explicit allow in the bucket policy overrides the lack of permissions in the IAM policy.
+
+<details>
+
+<summary>Explicit Allow for specific ARNs</summary>
+
+```json
+// Must provide exact role that is allowed, i.e., specific role ARNs
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "arn:aws:iam::ACCOUNT_ID:role/Role1",
+          "arn:aws:iam::ACCOUNT_ID:role/Role2"
+        ]
+      },
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::mybucketname/*"
+    }
+  ]
+}
+
+```
+
+
+
+</details>
+
+
+
+3. IAM Policy Allowing Read, Write, and Execute (RWX) attached either to Role or User, including a service role like one assigned to an EC2 instance + S3 Bucket Policy with an explicit "Deny" for RWX = <mark style="color:red;">**DENY**</mark>
+
+* Environment-Based Access Control (e.g., Dev, Test, Production), ie deny access for non-production instances to specific folders within the bucket.
+* Use IP condition to  block access from instances outside the designated VPCs, getting network-based security for data, ensuring that only instances from approved locations can access sensitive buckets.
+
+<details>
+
+<summary>Conditional IP </summary>
+
+*   An **IAM policy** attached to a user or role with:
+
+    ```json
+    jsonCopy code{
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:*",
+          "Resource": "arn:aws:s3:::mybucketname/*"
+        }
+      ]
+    }
+    ```
+*   An **S3 bucket policy** with:
+
+    ```json
+    jsonCopy code{
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Principal": "*",
+          "Action": "s3:*",
+          "Resource": "arn:aws:s3:::mybucketname/*",
+          "Condition": {
+            "IpAddress": {
+              "aws:SourceIp": "198.51.100.0/24"
+            }
+          }
+        }
+      ]
+    }
+    ```
+
+</details>
+
+* Time-Limited Access&#x20;
+
+EC2 instances will be denied permission to upload objects, regardless of other IAM permissions outside the time specified.
+
+<details>
+
+<summary>Conditional Write To Bucket   </summary>
+
+{% code overflow="wrap" %}
+```json
+//We allow instance to upload to bucket s3:PutObject only between 8am and 
+// 6pm.
+// Using both allow and deny makes the policy clear, as it explicitly states what is allowed and what is not and minimises the risk of accidental writes during off-hours
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::ACCOUNT_ID:role/EC2XYZRole"
+      },
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::mybucketname/*",
+      "Condition": {
+        "DateGreaterThan": {"aws:CurrentTime": "2024-10-25T08:00:00Z"},
+        "DateLessThan": {"aws:CurrentTime": "2024-10-25T18:00:00Z"}
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Principal": {
+        "AWS": "arn:aws:iam::ACCOUNT_ID:role/EC2XYZRole"
+      },
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::mybucketname/*",
+      "Condition": {
+        "DateLessThan": {"aws:CurrentTime": "2024-10-25T08:00:00Z"},
+        "DateGreaterThan": {"aws:CurrentTime": "2024-10-25T18:00:00Z"}
+      }
+    }
+  ]
+}
+
+
+```
+{% endcode %}
+
+</details>
+
+### Dynamic IAM Policy :&#x20;
+
+Dynamic policies evaluate conditions in real-time when an API request is made. For instance, they can include conditions based on the requester's attributes, the resource's attributes, the time of the request.
+
+For example, IAM policy that allows a **user** to perform actions on their own home directory, you can use <mark style="color:red;">policy variables.</mark> They're resolved when policy is evaluated.
+
+**How it works? -> Dynamic Resolution with standard policy variables**
+
+* Attach to all users, instead of impractically create individual policies
+
+**Enable Users to Access their Home Directory in S3 ->** When an IAM user (like `alice`) makes a request to /home, AWS automatically substitutes `${aws:username}` with `alice`. This means the user will only have access to the resources in `arn:aws:s3:::home/alice/*`.
+
+```json
+//user permissions to perform any S3 action
+//on their own folder in the home directory:
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+  
+     "Sid": "StmtAllowAllS3InHomeDir",
+      "Effect": "Allow",
+      "Action": "s3:*", // any action
+      "Resource": "arn:aws:s3:::home/${aws:username}/*"
+    }
+  ]
+}
+```
+
+**Enable Users to Manage their Credentials ->** The following policy permits any IAM user to perform any of the key and certificate related actions on their own credentials.
+
+```json
+{
+   “Version” : “2012-10-17”,
+   “Statement” : [ {
+       “Effect” : “Allow”,
+       “Action” : [ “iam:*AccessKey*”, “iam:*SigningCertificate*” ],
+       “Resource” :
+       [ “arn:aws:iam::123456789012:user/${aws:username}” ]
+     }
+   ]
+}
+```
 
 
 
 
-
-#### Achieving Fine Grained /Layered security
-
-Use IAM and bucket policies. IAM policy for DevOps group can grant access to the S3 bucket action (`"Action": "s3:GetObject",`) but Bucket policy (_also a JSON documents specifies permissions at the bucket level_) can enforce additional restrictions on specific objects / certain documents.
 
 ## MFA&#x20;
 
@@ -249,5 +467,7 @@ The **Lambda Execution Role** is an **IAM Role** that has both **permissions** (
 #### Useful Links
 
 [https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_elements.html](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_elements.html)
+
+[https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_variables.html#policy-vars-using-variables](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_variables.html#policy-vars-using-variables)
 
 [^1]: When you create an AWS Cloud9 environment, AWS automatically sets up the necessary service-linked role and attaches the appropriate policies for you
