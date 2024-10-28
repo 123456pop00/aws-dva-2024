@@ -21,11 +21,9 @@ STS issued credentials which are not stored with user but are generated dynamica
 
 * AWS STS supports CloudTrail, a service that records AWS calls for your  account and delivers log files to an Amazon S3 bucket.
 
-<figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
-
 ## API Actions
 
-**AssumeRole:** When you create a role, you create two policies: a role trust policy that specifies _who_ can assume the role, and a role permissions policy that specifies _what_ can be done with the role.&#x20;
+**AssumeRole:** When you create a role, you create two policies for a role: a role trust policy that specifies _who_ can assume the role, and a role permissions policy that specifies _what_ can be done with the role.&#x20;
 
 * This is the preferred approach when working with **temporary access** for specific permissions when you need to grant access to multiple users or external entities.
 
@@ -45,27 +43,8 @@ STS  AssumeRole returns:
 To Assume Role:
 
 1. Define an IAM Role.
-2. In the **trust policy** for the role, define the principal (user, role, or service) that can assume it. This principal can be within the same account or an external account.
-
-{% code title="Trust Policy " %}
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "arn:aws:iam::EXTERNAL_ACCOUNT_ID:root"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-
-```
-{% endcode %}
-
-
+2. Create **Trust policy** for the role, defining principal (user, role, or service) that can assume it. This principal can be within the same account or an external account.
+3. Principal, like  IAM user or service needs an explicit policy granting them permission to call the `sts:AssumeRole` API action. This permission grants them to call AssumeRole api on the ARN of `MyTemporaryRole`.
 
 **DecodeAuthorizationMessage:** decode API error message.
 
@@ -250,19 +229,21 @@ _**AWSCloud9ServiceRolePolicy**_** Policy Attached**&#x20;
 }
 ```
 
-### IAM user to assume role
+### :tophat: IAM user to assume role
 
-1. User must have permissions policy for the Role
+<figure><img src="../../.gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
+
+1. User must have permissions policy (IAM policy).
 
 ```bash
 {
 	"Version": "2012-10-17",
 	"Statement": [
 		{
-			"Sid": "AssumeSandboxUser",
+			"Sid": "AllowUserToAssumeSpecificRole",
 			"Effect": "Allow",
 			"Action": "sts:AssumeRole",
-			"Resource": "arn:aws:iam::YOUR_ACCOUNT_ID:role/NameOfTheRole_ToBe_Assumed"
+			"Resource": "arn:aws:iam::YOUR_ACCOUNT_ID:role/MyTemporaryRole"
 		}
 	]
 }
@@ -313,11 +294,9 @@ An error occurred (<mark style="color:red;">ValidationError</mark>) when calling
 
 ```bash
 aws sts assume-role 
---role-arn "arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME" 
---role-session-name "SESSION-NAME" | sed 's/[," :]//g;s/AccessKeyId/export AWS_ACCESS_KEY_ID=/;s/SecretAccessKey/export=AWS_SECRET_ACCESS_KEY=/;s/SessionToken/export AWS_SESSION_TOKEN=/ ' | grep 'export' | tee credentials.properties
+--role-arn "arn:aws:iam::ACCOUNT_ID:role/MyTemporaryRole" 
+--role-session-name "MySessioName" | sed 's/[," :]//g;s/AccessKeyId/export AWS_ACCESS_KEY_ID=/;s/SecretAccessKey/export=AWS_SECRET_ACCESS_KEY=/;s/SessionToken/export AWS_SESSION_TOKEN=/ ' | grep 'export' | tee credentials.properties
 ```
-
-
 
 7. Load extracted credentials into environment with . `credentials.properties` or `source credentials.properties`
 
