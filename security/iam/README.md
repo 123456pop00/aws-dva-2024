@@ -40,8 +40,8 @@ icon: lock-keyhole
 * Granular principle of <mark style="color:red;">least privilege</mark>. Never grant more permissions than needed.
 * Users inherit policies from groups they're in.
 * AWS evaluates <mark style="color:red;">permissions based on the most restrictive policy</mark>. If the IAM policy allows access but the bucket policy denies it, the user will be denied access.
-* AWS IAM policy evaluation, <mark style="color:red;">**explicit**</mark> <mark style="color:red;">**DENY  always takes precedence over allows.**</mark>
-* <mark style="color:red;">**Default Deny**</mark><mark style="color:red;">:</mark> If no allow or deny is found, access is denied by default.
+* AWS IAM policy evaluation, <mark style="color:red;">explicit</mark> <mark style="color:red;">DENY  always takes precedence over allows.</mark>
+* <mark style="color:red;">Default Deny,</mark> if no allow or deny is found, access is denied by default.
 * A "deny by default" model for permission
 
 ```mermaid
@@ -239,7 +239,7 @@ EC2 instances will be denied permission to upload objects, regardless of other I
 
 </details>
 
-### Dynamic IAM Policy :&#x20;
+### Dynamic IAM Policy
 
 Dynamic policies evaluate conditions in real-time when an API request is made. For instance, they can include conditions based on the requester's attributes, the resource's attributes, the time of the request.
 
@@ -251,9 +251,8 @@ For example, IAM policy that allows a **user** to perform actions on their own h
 
 **Enable Users to Access their Home Directory in S3 ->** When an IAM user (like `alice`) makes a request to /home, AWS automatically substitutes `${aws:username}` with `alice`. This means the user will only have access to the resources in `arn:aws:s3:::home/alice/*`.
 
-```json
-//user permissions to perform any S3 action
-//on their own folder in the home directory:
+```
+//user permissions to perform any S3 action on their own home dir 
 
 {
   "Version": "2012-10-17",
@@ -271,7 +270,7 @@ For example, IAM policy that allows a **user** to perform actions on their own h
 
 **Enable Users to Manage their Credentials ->** The following policy permits any IAM user to perform any of the key and certificate related actions on their own credentials.
 
-```json
+```
 {
    “Version” : “2012-10-17”,
    “Statement” : [ {
@@ -283,8 +282,6 @@ For example, IAM policy that allows a **user** to perform actions on their own h
    ]
 }
 ```
-
-
 
 
 
@@ -307,18 +304,18 @@ The **Lambda Execution Role** is an **IAM Role** that has both **permissions** (
 
 1.  **Permission policy:** permissions i.e. **what actions** (API calls) app/service can perform.
 
-    \-> You provide IAM Role when you create a function, and Lambda assumes the roels when it needs to read objects from an S3 bucket, the Permission Policy grants `s3:GetObject`
+    &#x20;\- You provide IAM Role when you create a function, and Lambda assumes the roles when it needs to read objects from an S3 bucket, the Permission Policy grants `s3:GetObject.`
 
-    \-> a Lambda writes to DynamoDB&#x20;
+    &#x20;\-  Lambda writes to DynamoDB.
 2.  **Trust Policy:**  specifies who (or what) is allowed to assume the role.
 
-    \-> For AWS Lambda, the **service principal** is `"lambda.amazonaws.com"`, which is allowed to take the action `"sts:AssumeRole"`. This enables Lambda to assume the role and execute the function on behalf of the service, while gaining the permissions needed to call the AWS Security Token Service (AWS STS) `AssumeRole` action.
+    \- For AWS Lambda, the **service principal** is `"lambda.amazonaws.com"`, which is allowed to take the action `"sts:AssumeRole"`. This enables Lambda to assume the role and execute the function on behalf of the service, while gaining the permissions needed to call the AWS Security Token Service (AWS STS) `AssumeRole` action.
 
 ### Common use cases
 
 * **AWS Lambda Execution Roles** ( IAM role to grant the function permissions to access other AWS services, like read/write to s3 bucket and access CloudWatch logs).
 * **EC2 Role** (ex: IAM role with permissions to access s3  bucket without embedding access keys in the instance).
-* AWS **Service Roles** ( Services assume the Role to perform actions on your behalf , for example, [**AWSCloud9ServiceRolePolicy**](#user-content-fn-1)[^1], which is AWS managed role with Service Linked Role Policy for AWS Cloud9. **AWSCloud9ServiceRolePolicy** is a managed policy attached to a service-linked role (often prefixed with `AWSServiceRoleFor`) which grants Cloud9 the necessary permissions to perform actions in your AWS account.
+* AWS **Service Roles** ( Services assume the Role to perform actions on your behalf, for example, AWSCloud9ServiceRolePolicy, a managed policy attached to a service-linked role (often prefixed with `AWSServiceRoleFor`) which grants Cloud9 the necessary permissions to perform actions in your AWS account.
 
 <details>
 
@@ -434,8 +431,6 @@ The **Lambda Execution Role** is an **IAM Role** that has both **permissions** (
 
 
 
-
-
 * **Federated User** (For AD or SAML based Identity provider set up federation, allowing users to assume IAM roles in AWS to access resources based on their identity in the external system)
 * **Cross-Account** Access
 * **Break Glass** Emergency Roles ( on call engineers using emergency procedure to assume the role in case of A,B,C)&#x20;
@@ -469,5 +464,3 @@ The **Lambda Execution Role** is an **IAM Role** that has both **permissions** (
 [https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_elements.html](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_elements.html)
 
 [https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_variables.html#policy-vars-using-variables](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_variables.html#policy-vars-using-variables)
-
-[^1]: When you create an AWS Cloud9 environment, AWS automatically sets up the necessary service-linked role and attaches the appropriate policies for you

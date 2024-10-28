@@ -6,7 +6,7 @@ AWS STS supports AWS CloudTrail, a service that records AWS calls for your AWS a
 
 ## API Actions
 
-**AssumeRole** :black\_nib:**:** When you create a role, you create two policies: a role trust policy that specifies _who_ can assume the role, and a permissions policy that specifies _what_ can be done with the role.&#x20;
+**AssumeRole:** When you create a role, you create two policies: a role trust policy that specifies _who_ can assume the role, and a permissions policy that specifies _what_ can be done with the role.&#x20;
 
 * This is the preferred approach when working with **temporary access** for specific permissions when you need to grant access to multiple users or external entities for a limited time.
 
@@ -17,11 +17,11 @@ aws sts assume-role
 --role-session-name "MySessionName"
 ```
 
-To Assume Role.
+To Assume Role:
 
-1. Define an IAM Role
+1. Define an IAM Role.
 2. In the **trust policy** for the role, define the principal (user, role, or service) that can assume it. This principal can be within the same account or an external account.
-3. Use STS API&#x20;
+3. Use STS API.
 
 ```json
 {
@@ -41,9 +41,9 @@ To Assume Role.
 
 
 
-**DecodeAuthorizationMessage** :black\_nib:**:** decode API error message.
+**DecodeAuthorizationMessage:** decode API error message.
 
-**GetCallerIdentity** :black\_nib:**:** return this
+**GetCallerIdentity:** return this :arrow\_down:
 
 ```bash
     "UserId": "AIDASAMPLEUSERID",
@@ -53,7 +53,7 @@ To Assume Role.
 ```
 
 \
-**GetSessionToken** :black\_nib:**:** when you want to **generate temporary credentials** for an existing IAM user without creating a new role or assuming a role. For example, short-lived credentials for an IAM user who already has specific permissions but wants to gain **temporary** elevated permissions or access AWS resources using **MFA**.
+**GetSessionToken:** when you want to **generate temporary credentials** for an existing IAM user without creating a new role or assuming a role. For example, short-lived credentials for an IAM user who already has specific permissions but wants to gain **temporary** elevated permissions or access AWS resources using **MFA**.
 
 &#x20;`aws sts get-session-token --duration-seconds 86400 // for 24 hours`
 
@@ -62,7 +62,7 @@ To use with MFA:
 1. Get token, calling `get-session-token`+ provide your **MFA device serial number** and **MFA token code.**
 2. Configured IAM Policy with MFA condition
 
-```
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -85,12 +85,12 @@ To use with MFA:
 
 **AssumeRoleWithSAML:** returns short-term credentials for a role authenticated with SAML. This is **useful** when you have a company that uses an **external identity provider (IdP)**, like Microsoft ADy, Okta, or another SAML-based service, so instead of creating individual AWS IAM users for each person, you can set up **federated access.**&#x20;
 
-This operation provides a mechanism for tying an enterprise identity store or directory to role-based AWS access without user-specific credentials or configuration
+This operation provides a mechanism for tying an enterprise identity store or directory to role-based AWS access without user-specific credentials or configuration.
 
 **GetFederationToken:** generate temporary credentials for federated user.\
 
 
-### &#x20;Grant a user permissions to pass a role to an AWS service => a user must have permissions to _pass the role_ to the service with _iam:PassRole_&#x20;
+### :closed\_lock\_with\_key:Grant a user permissions to pass a role to an AWS service => a user must have permissions to _pass the role_ to the service with _iam:PassRole_&#x20;
 
 To configure many AWS services, you must _pass_ an IAM role to the service. This allows the service to assume the role later and perform actions on your behalf. For most services, you only have to pass the role to the service once during setup, and not every time that the service assumes the role.
 
@@ -119,7 +119,7 @@ For example: AWSServiceRoleForAWSCloud9 service role, AWS managed will have&#x20
 }
 ```
 
-**Policy Attached -** AWSCloud9ServiceRolePolicy
+_**AWSCloud9ServiceRolePolicy**_** Policy Attached**&#x20;
 
 ```json
 {
