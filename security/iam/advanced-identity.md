@@ -1,14 +1,35 @@
 # AWS STS
 
-Service to grant limited-privileges credentials and temporary access to AWS resources (up to 1 hour).&#x20;
+AWS Security Token Service is a web service that provides IAM and federated users with limited-privileges credentials and temporary access to AWS resources via API calls.
 
-AWS STS supports AWS CloudTrail, a service that records AWS calls for your AWS account and delivers log files to an Amazon S3 bucket.
+STS issued credentials which are not stored with user but are generated dynamically.&#x20;
+
+* Allows to grant access to federated users without specifying IAM Identity for them on AWS.&#x20;
+* Cross-Account Access for multiple AWS accounts. Delegation approach.
+* No need rotate, revoke long-term credentials because of the limited lifetime. Default Session Duration is 1 hour (3600 seconds).
+
+#### Support for 2 Types of Federated Access via STS:
+
+* **SAML 2.0** (Security Assertion Markup Language ) **IdPs**: Enterprise identity providers using SAML assertions. (SSO)&#x20;
+* **Web Identity** compatible with **OpenID Connect** (OIDC). Such as Salesforce, google, useful for mobile apps.
+
+<div align="left">
+
+<figure><img src="../../.gitbook/assets/Screenshot 2024-10-28 at 13.59.26.png" alt="" width="188"><figcaption></figcaption></figure>
+
+</div>
+
+* AWS STS supports CloudTrail, a service that records AWS calls for your  account and delivers log files to an Amazon S3 bucket.
+
+<figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
 
 ## API Actions
 
-**AssumeRole:** When you create a role, you create two policies: a role trust policy that specifies _who_ can assume the role, and a permissions policy that specifies _what_ can be done with the role.&#x20;
+**AssumeRole:** When you create a role, you create two policies: a role trust policy that specifies _who_ can assume the role, and a role permissions policy that specifies _what_ can be done with the role.&#x20;
 
-* This is the preferred approach when working with **temporary access** for specific permissions when you need to grant access to multiple users or external entities for a limited time.
+* This is the preferred approach when working with **temporary access** for specific permissions when you need to grant access to multiple users or external entities.
+
+For IAM user to make API Call to STS, a user must provide:&#x20;
 
 ```bash
 aws sts get-caller-identity // get the account number ie 123456789012
@@ -17,12 +38,16 @@ aws sts assume-role
 --role-session-name "MySessionName"
 ```
 
+STS  AssumeRole returns:
+
+**Access Key ID**, **Secret Access Key**, and **Session Token** that are valid for the specified duration.
+
 To Assume Role:
 
 1. Define an IAM Role.
 2. In the **trust policy** for the role, define the principal (user, role, or service) that can assume it. This principal can be within the same account or an external account.
-3. Use STS API.
 
+{% code title="Trust Policy " %}
 ```json
 {
   "Version": "2012-10-17",
@@ -38,6 +63,7 @@ To Assume Role:
 }
 
 ```
+{% endcode %}
 
 
 
@@ -83,7 +109,7 @@ To use with MFA:
 
 
 
-**AssumeRoleWithSAML:** returns short-term credentials for a role authenticated with SAML. This is **useful** when you have a company that uses an **external identity provider (IdP)**, like Microsoft ADy, Okta, or another SAML-based service, so instead of creating individual AWS IAM users for each person, you can set up **federated access.**&#x20;
+**AssumeRoleWithSAML:** returns short-term credentials for a role authenticated with SAML. This is **useful** when you have a company that uses an **external identity provider (IdP)**, like Microsoft AD, Okta, or another SAML(Security Assertion Markup Language)-based service, so instead of creating individual AWS IAM users for each person, you can set up **federated access.**&#x20;
 
 This operation provides a mechanism for tying an enterprise identity store or directory to role-based AWS access without user-specific credentials or configuration.
 
@@ -102,7 +128,7 @@ To configure many AWS services, you must _pass_ an IAM role to the service. This
 
 For example: AWSServiceRoleForAWSCloud9 service role, AWS managed will have&#x20;
 
-**Trus Relationship**
+**Trust Relationship**
 
 ```json
 {
@@ -224,11 +250,83 @@ _**AWSCloud9ServiceRolePolicy**_** Policy Attached**&#x20;
 }
 ```
 
+### IAM user to assume role
+
+1. User must have permissions policy for the Role
+
+```bash
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "AssumeSandboxUser",
+			"Effect": "Allow",
+			"Action": "sts:AssumeRole",
+			"Resource": "arn:aws:iam::YOUR_ACCOUNT_ID:role/NameOfTheRole_ToBe_Assumed"
+		}
+	]
+}
+```
+
+2. Configure Role in the same or another account that user will assume.
+3. **Create Trust policy** that has the ARN of the User that should be able to assume this role.
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::YOUR_ACCOUNT_ID:user/USER_NAME"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+
+```
+
+3. **Attach Permissions Policy** to the role. Can be managed on inline.
+4. **CLI Configuration**: Configure the  user in your CLI using:&#x20;
+
+```bash
+# configure
+aws configure --profile profileName
+# switch
+export AWS_PROFILE=profileName
+```
+
+5. **Call AssumeRole**: Use the `--role-arn` and `--role-session-name` parameters, with optional `--duration-secondss`
+
+If you change `--duration-seconds 7200` parameter ensure you update the session duration in management console (Select Role Summary -> Edit)
+
+An error occurred (<mark style="color:red;">ValidationError</mark>) when calling the AssumeRole operation: The requested DurationSeconds exceeds the MaxSessionDuration set for this role.
+
+<div align="left">
+
+<figure><img src="../../.gitbook/assets/Screenshot 2024-10-28 at 17.36.01.png" alt="" width="375"><figcaption></figcaption></figure>
+
+</div>
+
+6. Run AssumeRole and pipe credentials into a file
+
+```bash
+aws sts assume-role 
+--role-arn "arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME" 
+--role-session-name "SESSION-NAME" | sed 's/[," :]//g;s/AccessKeyId/export AWS_ACCESS_KEY_ID=/;s/SecretAccessKey/export=AWS_SECRET_ACCESS_KEY=/;s/SessionToken/export AWS_SESSION_TOKEN=/ ' | grep 'export' | tee credentials.properties
+```
 
 
-&#x20;\
+
+7. Load extracted credentials into environment with . `credentials.properties` or `source credentials.properties`
+
 
 
 #### Useful Links
+
+[https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-options.html](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-options.html)
+
+[https://docs.aws.amazon.com/IAM/latest/UserGuide/id\_roles\_providers\_saml\_3rd-party.html?icmpid=docs\_iam\_help\_panel\_create](https://docs.aws.amazon.com/IAM/latest/UserGuide/id\_roles\_providers\_saml\_3rd-party.html?icmpid=docs\_iam\_help\_panel\_create)
 
 [https://docs.aws.amazon.com/STS/latest/APIReference/API\_Operations.html](https://docs.aws.amazon.com/STS/latest/APIReference/API\_Operations.html)
