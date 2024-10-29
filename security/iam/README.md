@@ -31,7 +31,9 @@ icon: lock-keyhole
 
 
 
-<figure><img src="../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+
+
+<figure><img src="../../.gitbook/assets/IAM.png" alt=""><figcaption></figcaption></figure>
 
 ## IAM Policies ( Group, Inline)
 
