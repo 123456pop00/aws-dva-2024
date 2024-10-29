@@ -40,5 +40,6 @@
 
 ## Troubleshooting and Optimization
 
+* [Resilience Hub](troubleshooting-and-optimization/resilience-hub.md)
 * [Integrations](integrations/README.md)
   * [Step Functions](integrations/step-functions.md)

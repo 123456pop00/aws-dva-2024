@@ -28,11 +28,12 @@ This is the preferred approach when working with **temporary access** for specif
 
 **AssumeRole API Call to STS:**
 
-<pre class="language-bash"><code class="lang-bash">aws sts assume-role 
-<strong>--role-arn "arn:aws:iam::123456789012:role/MyTemporaryRole" #required
-</strong>--role-session-name "MySessionName" # required
+```bash
+aws sts assume-role 
+--role-arn "arn:aws:iam::123456789012:role/MyTemporaryRole" #required
+--role-session-name "MySessionName" # required
 --duration-seconds 86400 # optional 
-</code></pre>
+```
 
 **Returns:**
 
@@ -44,7 +45,7 @@ These must be loaded into env in order for assumed role to have the permissions 
 
 <details>
 
-<summary><span data-gb-custom-inline data-tag="emoji" data-code="1f472">👲</span>  IAM user to assume role ( same/cross account)</summary>
+<summary><span data-gb-custom-inline data-tag="emoji" data-code="1f472">👲</span>  <mark style="color:red;">IAM user to assume role ( same/cross account)</mark></summary>
 
 1. For user that will assume a role, add inline permissions / IAM policy. Permissions must be explicitly granted for this principal to assume a role.
 
@@ -102,7 +103,7 @@ Multiple principles can be defined to assume a role.&#x20;
 aws configure --profile sandbox
 # switch
 export AWS_PROFILE=sandbox
-#check for current 
+#check for env variables
 env | grep AWS_ 
 # AWS_PROFILE=sandbox
 ```
@@ -184,9 +185,13 @@ This operation provides a mechanism for tying an enterprise identity store or di
 
 **GetCallerIdentity:** returns details about the IAM user or role whose credentials are used to call the operation.
 
+**GetSessionToken:** to obtain temporary security credentials that provide enhanced security, particularly with Multi-Factor Authentication (MFA). This adds an additional layer of security by ensuring that only users who have access to the MFA device can obtain the temporary credentials.
+
+## Service Roles
+
 <details>
 
-<summary><span data-gb-custom-inline data-tag="emoji" data-code="1f510">🔐</span>Grant a user permissions to pass a Role to an AWS service </summary>
+<summary><span data-gb-custom-inline data-tag="emoji" data-code="1f510">🔐</span><mark style="color:red;">Grant a user permissions to pass a Role to an AWS service - iam:PassRole</mark> </summary>
 
 To configure many AWS services, you must pass an IAM role to the service. This allows the service to assume the role later and perform actions on your behalf. For most services, you only have to pass the role to the service once during setup, and not every time that the service assumes the role.&#x20;
 
@@ -208,3 +213,61 @@ _As an **IAM user** or **IAM role** creating a Cloud9 environment, you need the 
 
 
 </details>
+
+### STS with MFA
+
+1. **Attach MFA to IAM User**: Ensure the IAM user has MFA enabled. This can be done in the IAM Console.
+2. To enforce MFA security layer, add a policy condition with boolean true for  `aws:MultiFactorAuthPresent` to restrict access based on whether MFA was used in the STS request.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:TerminateInstances",
+        "ec2:DeleteSnapshot",
+        "ec2:DeleteVolume"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "Bool": {
+          "aws:MultiFactorAuthPresent": "true"
+        }
+      }
+    }
+  ]
+}
+
+```
+
+_When attached to the IAM user or role it will restrict user or role that tries to delete EC2 instances to provide MFA, or the action will be denied._
+
+2. **Get Session Token with MFA**: Use the `sts get-session-token` API call with the `--serial-number` and `--token-code` options.
+
+* `--serial-number` is the ARN of the MFA device associated with the IAM user.
+* `--token-code` is the 6-digit code from the MFA device.
+
+```bash
+aws sts get-session-token --serial-number arn:aws:iam::account-id:mfa/user-name --token-code 123456
+```
+
+3. **Receive Temporary Credentials**: AWS STS returns temporary security credentials **(Access Key ID, Secret Access Key, and Session Token**) that are valid for the specified duration (up to 36 hours with MFA).
+4. **Use Temporary Credentials**: Save credentials in a file `credentials.properties` . Configure temporary credentials in your environment to make authenticated API requests.  Load into your shell environment by running: `source credentials.properties.`
+
+```bash
+# credentials file content
+AWS_ACCESS_KEY_ID=your-access-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-access-key
+AWS_SESSION_TOKEN=your-session-token
+
+```
+
+#### Useful Links
+
+[https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-options.html](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-options.html)
+
+[https://docs.aws.amazon.com/IAM/latest/UserGuide/id\_roles\_providers\_saml\_3rd-party.html?icmpid=docs\_iam\_help\_panel\_create](https://docs.aws.amazon.com/IAM/latest/UserGuide/id\_roles\_providers\_saml\_3rd-party.html?icmpid=docs\_iam\_help\_panel\_create)
+
+[https://docs.aws.amazon.com/STS/latest/APIReference/API\_Operations.html](https://docs.aws.amazon.com/STS/latest/APIReference/API\_Operations.html)
