@@ -29,9 +29,7 @@ icon: lock-keyhole
 
     * AWS provides guidelines for access key rotation every 90 days.
 
-
-
-
+    <figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
 
 <figure><img src="../../.gitbook/assets/IAM.png" alt=""><figcaption></figcaption></figure>
 

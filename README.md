@@ -36,3 +36,4 @@ The AWS Certified Developer - Associate (DVA-C02) exam is intended for individua
 
 * [AWS workshops](https://awsworkshop.io/)
 * [AWS Ramp-up guides](https://aws.amazon.com/training/ramp-up-guides/)
+* [https://github.com/acantril/learn-cantrill-io-labs?tab=readme-ov-file](https://github.com/acantril/learn-cantrill-io-labs?tab=readme-ov-file)
