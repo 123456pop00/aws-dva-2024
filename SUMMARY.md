@@ -15,6 +15,7 @@
 
 * [Compute: EC2](development-with-aws-services/compute-ec2/README.md)
   * [EC2 Storage](development-with-aws-services/compute-ec2/ec2-storage.md)
+  * [AMIs](development-with-aws-services/compute-ec2/amis.md)
   * [ELB & ASG](development-with-aws-services/compute-ec2/elb-and-asg.md)
 * [Elastic Beanstalk](development-with-aws-services/elastic-beanstalk.md)
 * [S3](development-with-aws-services/s3.md)

@@ -18,6 +18,7 @@ _means data is stored in fixed-size block or like a stack of building blocks whe
 
 * **Persists independently** from the life of its associated instance - data persists after instance termination, can be used to re-create instance and mount the same EBS volume
 * Attach / detach with persistence is useful for failover, or attach on demand
+* To **attach additional volume**  ensure AZ is the same like eu-noth-1a eu-noth-1b
 * **Bound** to specific **AZ** but if you **snapshot** it, you can move across AZ or Region. Snapshots are stored in S3
   * Recycle Bin for EBS Snapshots allows to retain deleted snapshots for a specified duration (from 1 day to 1 year), provides protection against accidental deletion, ie restore in minutes
   * EBS Snapshot Archive tier is 75% cheaper, but takes up to 24-72 hr restore time
@@ -99,7 +100,7 @@ Volumes using _solid-state drive (SSD)_ and the older spinning _hard drives (HDD
 * Inside the instance store data is stored on block devices, number of block devices depends on instance type & size (m,r,c)
 * Copy data to EFS, S3 or EBS if you want to retain data after instance is deleted
 * Very high IOPS up to 3.3million on i3.16xlarge or i3.metal instance sizes
-* Good for buffer (data that's being moved from one place to another, video streaming service buffering video data to ensure smooth playback), scratch data (for intermediate data processing, worked on, like image editing), cache(frequently accessed data, to speed up future access), any other temp content
+* Good for **buffer** (data that's being moved from one place to another, video streaming service buffering video data to ensure smooth playback), **scratch data** (for intermediate data processing, worked on, like image editing), **cache** (frequently accessed data, to speed up future access), any other temp content
 
 ### File
 
