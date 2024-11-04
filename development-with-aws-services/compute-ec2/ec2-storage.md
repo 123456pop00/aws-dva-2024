@@ -6,7 +6,7 @@ AWS Cloud native storage options
 * File storage - EFS
 * Object - S3 + tiers (Glacier etc)
 
-### Block
+## Block
 
 _means data is stored in fixed-size block or like a stack of building blocks where each block can be individually accessed, modified, or deleted, is designed for workloads that require persistent storage accessible by EC2 instances._
 
@@ -40,7 +40,7 @@ _means data is stored in fixed-size block or like a stack of building blocks whe
 * It uses network ( _=read latency)_ communication
 * Delete on termination by default is enabled for **root volumes**, not for additional volumes
 
-### **4 Volume Types**
+#### **4 Volume Types**
 
 <div align="left">
 
@@ -91,7 +91,19 @@ Volumes using _solid-state drive (SSD)_ and the older spinning _hard drives (HDD
    3. **cannot be used as boot volumes** for EC2 instances. Boot volumes must be of type **SSD (gp2 or gp3)** or **provisioned io1/io2.**
 4. **Cold HDD (sc1)**: Lowest-cost HDD designed for less frequently accessed data, suitable for cold storage and large data sets archival purposes
 
+### Instance Store - ephemeral block-level storage
+
+* volume is attached to the **underlying physical host**, if <mark style="color:red;">**you stop, hibernate, or terminate an instance, any data on instance store volumes is lost.**</mark> The reason for this, is that if you start your instance from a stop state, it's likely that EC2 instance will start up on another host. A host where that volume does not exist. Instances are just VMs, so underlying host can change between stopping and starting an instance
+  * every block of the instance store volume is cryptographically \* erased
+  * data persists if <mark style="color:red;">**rebooted**</mark>
+* Inside the instance store data is stored on block devices, number of block devices depends on instance type & size (m,r,c)
+* Copy data to EFS, S3 or EBS if you want to retain data after instance is deleted
+* Very high IOPS up to 3.3million on i3.16xlarge or i3.metal instance sizes
+* Good for buffer (data that's being moved from one place to another, video streaming service buffering video data to ensure smooth playback), scratch data (for intermediate data processing, worked on, like image editing), cache(frequently accessed data, to speed up future access), any other temp content
+
 ### File
+
+
 
 ### Object
 
