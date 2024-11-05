@@ -41,15 +41,27 @@ _means data is stored in fixed-size block or like a stack of building blocks whe
 * It uses network ( _=read latency)_ communication
 * Delete on termination by default is enabled for **root volumes**, not for additional volumes
 
-#### **4 Volume Types**
+#### EBS Multi-Attach&#x20;
+
+_For example, for a) High-Availability Clustered Applications, this allows the cluster to read and write to shared storage, ensuring high availability and data consistency even if one instance fails; b) distributed file systems, where multiple instance require parallel access, c) when an ultra-low latency, consistent high IOPS, or block-level storage are necessary_
+
+* only available via io1 / io2 type volume
+* limited to 16 EC2 instances
+* attach same EBS volume to multiple instances **in the same AZ,** with each instance having **full rw permissions** to the volume
+* must be cluster-aware file system
+
+**Use case:**&#x20;
+
+* To achieve higher application availability
+* To achieve concurrent writes
+
+#### **6 Volume Types**
 
 <div align="left">
 
 <figure><img src="../../.gitbook/assets/Screenshot 2024-11-04 at 12.01.28.png" alt="" width="375"><figcaption></figcaption></figure>
 
 </div>
-
-
 
 <details>
 
@@ -58,10 +70,10 @@ _means data is stored in fixed-size block or like a stack of building blocks whe
 Volumes using _solid-state drive (SSD)_ and the older spinning _hard drives (HDDs)_.
 
 * **SSD**: Faster, electronic, ideal for quick access and performance-sensitive applications.
-  * Good for high-performance workloads
+  * Good for high-performance workloads, random access, OLTP databases
   * **Small, Frequent Operations**: Ideal for applications requiring many small, frequent read/write operations, such as databases and transactional workloads.
   * **Speed**: Much faster access times because there are no moving parts; data retrieval is instantaneous.
-* **HDD**: Slower, mechanical, good for large data storage.
+* **HDD**: Slower, mechanical, good for large data storage with sequential access&#x20;
   * Good for large, infrequently accessed data.
   * **Speed**: Slower access times due to mechanical parts (spinning disks and moving read/write heads).
 
@@ -71,26 +83,36 @@ Volumes using _solid-state drive (SSD)_ and the older spinning _hard drives (HDD
 
 </details>
 
-
-
 1. **General Purpose SSD (gp3)**: Balanced price and performance, suitable for a wide range of workloads.
-   1. General Purpose SSD (gp3, gp2) baseline performance scales linearly at 3 IOPS per GiB with a minimum of 100 IOPS, burstable to 3000 IOPS. Max **16,000 IOPS**.
-   2. System boot volumes
-   3. Recommended for most workloads
-   4. interactive, low-latency
-2. **Provisioned IOPS SSD (io1,io2)**: High-performance storage for I/O-intensive applications, offering consistent and low-latency performance.
-   1. ideal for **critical business applicaitons**, high-performance SSD (io2) for in-memory data processing and real-time analytics, _sap hana, oracle, mongodb_
-   2.  Provisioned IOPS SSD (io1) volumes support between 100 and 64,000 IOPS **depending on the volume size**. For io1 volumes, you can provision up to <mark style="color:red;">50 IOPS per GiB.</mark>&#x20;
+   1. General Purpose SSD latest generation **gp3** baseline performance scales linearly at 3 IOPS per GiB with a minimum of 100 IOPS, burstable to 3000 IOPS. Max **16,000 IOPS and throughput 1000 Mib/s**
+      1. **Independent Configuration**: IOPS and throughput can be configured separate from the volume size, allowing for more flexible performance scaling. <mark style="color:purple;">**Independently provision IOPS for gp3**</mark> :sunflower:
+   2. General Purpose SSD (gp2) have **linked IOPS & throughput**, providing **3 IOPS per GiB** with a maximum of **16,000 IOPS**.
+   3. System **boot volumes**
+   4. <mark style="color:purple;">**gp2**</mark> does <mark style="color:purple;">**not support independent IOPS provisioning;**</mark> its IOPS scales automatically
+   5. Recommended for most workloads, test, dev env
+   6. Interactive, low-latency
+2. **Provisioned IOPS SSD (io1, io2)**: High-performance storage for I/O-intensive applications, offering consistent and low-latency performance, high-throughput.
+   1. Ideal for **mission** **critical business applications**, high-performance SSD (io2) for in-memory data processing and real-time analytics, _sap hana, oracle, mongodb_
+   2. For applications requiring over 16,000 IOPS, like DB requiring performance and consistency
+   3. System **boot volumes**
+   4. <mark style="color:purple;">**Independently provision IOPS from storage size for io1 , io2**</mark>:sunflower:
+   5. Provisioned IOPS SSD io2 **have max PIOPS 256,000, sub-millisecond latency**
+      1. **support EBS multi-attach**
+   6.  Provisioned IOPS SSD (io1) volumes support between 100 and <mark style="color:red;">**64,000**</mark> IOPS **depending on the volume size**. For io1 volumes, you can provision up to <mark style="color:red;">50 IOPS per GiB.</mark>&#x20;
 
        * SSD (io1) -> Size = 4 GiB, IOPS = Min: 100 IOPS, Max: 200 IOPS
        * SSD (io1) -> Size = 500 Gib, IOPS = 3000
 
 
-3. **Throughput Optimized HDD (st1)**: Low-cost HDD for frequently accessed, throughput-intensive workloads like log processing, ETL workloads, big data, data warehouses.
+3. **Throughput Optimized HDD (st1)**: Low-cost HDD for frequently accessed, <mark style="color:red;">throughput-intensive</mark> workloads like log processing, ETL workloads, big data, data warehouses. **Higher latency vs SSD**
    1. Offer lower IOPS compared to SSD volumes, **focusing** **on throughput** rather than random I/O operations
-   2. st1 volumes are a lower-cost option for workloads that require high data transfer rates but do not need the low-latency performance of SSDs
-   3. **cannot be used as boot volumes** for EC2 instances. Boot volumes must be of type **SSD (gp2 or gp3)** or **provisioned io1/io2.**
+   2. up to 16TiB
+   3. max throughput of 500 Mib/s - max IOPS 500
+   4. st1 volumes are a lower-cost option for workloads that require high data transfer rates but do not need the low-latency performance of SSDs
+   5. <mark style="color:red;">**cannot be used as boot volumes**</mark> for EC2 instances. Boot volumes must be of type **SSD (gp2 or gp3)** or **provisioned io1/io2.**
 4. **Cold HDD (sc1)**: Lowest-cost HDD designed for less frequently accessed data, suitable for cold storage and large data sets archival purposes
+   1. max throughput is 250 Mib/s - max IOPS 250
+   2. for lowest cost possible&#x20;
 
 ### Instance Store - ephemeral block-level storage
 
@@ -102,7 +124,49 @@ Volumes using _solid-state drive (SSD)_ and the older spinning _hard drives (HDD
 * Very high IOPS up to 3.3million on i3.16xlarge or i3.metal instance sizes
 * Good for **buffer** (data that's being moved from one place to another, video streaming service buffering video data to ensure smooth playback), **scratch data** (for intermediate data processing, worked on, like image editing), **cache** (frequently accessed data, to speed up future access), any other temp content
 
-### File
+## File
+
+### EFS
+
+* Managed NFS( network file system) that can be mounted on 100s of EC2
+* EBS Multi-Attach like multithreading with data
+  * lock mechanism
+  * version controls
+  * last write wins
+  * merge changes
+* POSIX file system (\~Linux) that has a standard file API
+* Works with Linux EC2s in multi AZ, designed for multiple EC2 instances to access simultaneously4
+* Not compatible with Windows AMIs
+
+#### Features
+
+**Elastic -** pay only for capacity used, scales with capacity, <mark style="color:red;">supports workload spikes</mark> &#x20;
+
+**Serverless & scalable -** no provisioning, scale capacity, connections, and IOPSs, grows to petabyte-scale NFS automatically
+
+* Ancestery.com case ( i.e., multiple scientists to perform genomics research and need to manage unpredictable workload so EFS scales compute and storage resources up or down, not pay for idle resources
+
+**Performant -** 10s GB/s and 500,000+ IOPS. Performance settings are customisable upon setup.
+
+<figure><img src="../../.gitbook/assets/Screenshot 2024-11-05 at 10.55.15.png" alt=""><figcaption></figcaption></figure>
+
+
+
+**3-AZ durable and all-AZ available** - designed for 11 9s of durability and 99,99% availability SLA
+
+* For sandbox, backups, dev, pre-prod workloads use One Zone (single AZ), also compatible with IA
+
+**Concurrent access for 10,000s of connections -** EC2 instances, lambda invocations, containers
+
+**Persistent storage type** -  if Wordpress traffic goes up, you want more servers, but you need access to the same static content
+
+**Two storage classes -** lifecycle based cost optimisation, need to implement lifecycle policy.
+
+* Standard Tier (_on first access in IA, Archive move back to Standard class_)
+* EFS-IA (_after n-days move to IA, i.e. 30 days since last access, retrieval cost but lower storage costs_)
+* Archive (_rarely accessed files, 50% lower costs_)
+
+#### EFS vs EBS
 
 
 
