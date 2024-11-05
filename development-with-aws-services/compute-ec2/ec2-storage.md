@@ -17,7 +17,7 @@ _means data is stored in fixed-size block or like a stack of building blocks whe
 ### EBS&#x20;
 
 * **Persists independently** from the life of its associated instance - data persists after instance termination, can be used to re-create instance and mount the same EBS volume
-* Attach / detach with persistence is useful for failover, or attach on demand
+* EBS is **primarily designed** for **single-instance access,** and even multi-attach is limited to 16, which helps maintain performance predictability since only a few instances are accessing the volume at a time fro specific use case.
 * To **attach additional volume**  ensure AZ is the same like eu-noth-1a eu-noth-1b
 * **Bound** to specific **AZ** but if you **snapshot** it, you can move across AZ or Region. Snapshots are stored in S3
   * Recycle Bin for EBS Snapshots allows to retain deleted snapshots for a specified duration (from 1 day to 1 year), provides protection against accidental deletion, ie restore in minutes
@@ -42,6 +42,8 @@ _means data is stored in fixed-size block or like a stack of building blocks whe
 * Delete on termination by default is enabled for **root volumes**, not for additional volumes
 
 #### EBS Multi-Attach&#x20;
+
+The EBS volume can only be attached to one **EC2 instance at a time** (unless you use Multi-Attach for io1/io2 volumes)
 
 _For example, for a) High-Availability Clustered Applications, this allows the cluster to read and write to shared storage, ensuring high availability and data consistency even if one instance fails; b) distributed file systems, where multiple instance require parallel access, c) when an ultra-low latency, consistent high IOPS, or block-level storage are necessary_
 
@@ -128,7 +130,9 @@ Volumes using _solid-state drive (SSD)_ and the older spinning _hard drives (HDD
 
 ### EFS
 
-* Managed NFS( network file system) that can be mounted on 100s of EC2
+* Managed NFS( network file system) that can be mounted on 100s of EC2. There’s no hard limit on the number of instances that can connect to EFS simultaneously.
+* EFS is designed for broad, concurrent access by many instances
+* File system interface, a hierarchical tree-like directory structure that you can navigate in your terminal. (_users and applications to interact with data as files and directories, similar to how they would work with a traditional file system on their operating systems)_
 * EBS Multi-Attach like multithreading with data
   * lock mechanism
   * version controls
@@ -137,6 +141,7 @@ Volumes using _solid-state drive (SSD)_ and the older spinning _hard drives (HDD
 * POSIX file system (\~Linux) that has a standard file API
 * Works with Linux EC2s in multi AZ, designed for multiple EC2 instances to access simultaneously4
 * Not compatible with Windows AMIs
+* Ideal for scenarios where many applications or instances need to read and write data simultaneously, like in a collaborative environment
 
 #### Features
 
@@ -168,7 +173,34 @@ Volumes using _solid-state drive (SSD)_ and the older spinning _hard drives (HDD
 
 #### EFS vs EBS
 
+**Design Purpose**: EBS Multi-Attach is more about allowing a small number of instances to access a volume for specific use cases, while EFS is designed for broad, concurrent access by many instances.
 
+EFS :thumbsup:
+
+* I need to share data between containers
+* I want to run across instances or AZs
+* Take advantage of spot pricing
+* I need a storage solution that automatically scales as I add or remove files
+
+EBS :thumbsup:
+
+* I don't need to share storage
+* I need point-in-time snapshots for backup and recovery, managing backups, snapshots, and data recovery is simpler when the storage is tied to a single instance
+* I require higher IOPS and lower latency for my applications
+* Applications must manage data at the block level
+
+| Storage type    | EFS                             | EBS                               |
+| --------------- | ------------------------------- | --------------------------------- |
+| **Use Case**    | Shared data across instances    | Data attached to single instance  |
+| **Scalability** | Automatic scaling               | Manual resizing                   |
+| **Access**      | Concurrent access               | Single-instance access            |
+| **Performance** | Moderate latency                | High IOPS and low latency         |
+| **Replication** | Multi-AZ by default             | Snapshot-based replication        |
+| **Snapshots**   | :no\_entry:                     | Point-in-time snapshots available |
+| **Cost Model**  | Pay for storage used            | Pay for provisioned size and IOPS |
+| **Ideal for**   | Containers and shared workloads | Databases and transactional apps  |
+
+####
 
 ### Object
 
