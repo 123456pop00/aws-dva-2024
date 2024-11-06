@@ -44,9 +44,6 @@ Resilience -  workload ability to recover from infrastructure or service disrupt
 * Handle failure downstream: Health Checks to monitor instance health and reroutes traffic from unhealthy to healthy instances using configurable checks on ports, routes, and endpoints (e.g., `/health`).
 * Expose single point of access, which is ELB DNS name
   * Provides enhanced security because SG inbound rule of EC2 instance will reference ALB SG, which will allow HTTP on port 80, so we can't access instance directly via public IPv4&#x20;
-  *
-
-      <figure><img src="../../../.gitbook/assets/SG_ALB_instances.png" alt=""><figcaption></figcaption></figure>
   * application servers / ec2 instances don't see end-client IPs, it in inside X-Forwarded-For header of http request
   * ALB connects to instance on private LB IPs
 * DNS host name for your application
@@ -91,17 +88,17 @@ Resilience -  workload ability to recover from infrastructure or service disrupt
 
 <details>
 
-<summary>Target Group for ALB</summary>
+<summary><mark style="color:purple;">Target Group for ALB</mark></summary>
 
-* Click Include targets ( only healthy, running will appear)
+### Click Include targets ( only healthy, running will appear)
 
 ![](../../../.gitbook/assets/registerPendingTargets.png)
 
-* Monitor
+### Monitor
 
 ![](../../../.gitbook/assets/TargetsStateMonitor.png)
 
-**Listener Rules**
+### **Listener Rules**
 
 Listeners and rules -> Select default Rule (HTTP : 80) -> Add Rule
 
@@ -151,6 +148,23 @@ Listeners and rules -> Select default Rule (HTTP : 80) -> Add Rule
     5. bump-in-the-wire between the source and destination
 
     For that Route tables must be configured in VPC, and traffic goes to GWLB -> virtual applications -> if accepted -> GWLB -> application&#x20;
+
+## TG Attributes
+
+<figure><img src="../../../.gitbook/assets/delay.png" alt=""><figcaption></figcaption></figure>
+
+* **Deregistration Delay** is set for a **target group**, not for individual targets (EC2 instances). For example, delay to **60 seconds**, when an instance is deregistered from the load balancer (e.g., during scaling down or when manually removing it), the load balancer will wait for 60 seconds before fully removing it.
+* The delay time is between **1 to 3600 seconds** (1 hour).
+  * **Short Delays** (30-60 seconds ) :heavy\_plus\_sign: Reduced waiting time for traffic to stop flowing to a deregistered instance :heavy\_minus\_sign: Active connections may be interrupted, leading to error req.
+    * For **stateless apps,**  web server serving simple, short-lived HTTP requests (like a REST API).
+    * **For highly dynamic environment** where instances are being frequently added and removed (e.g., autoscaling environments), you may want a shorter deregistration delay to ensure quick response times.
+    * Low latency / Real-time applications&#x20;
+    * Zero downtime recovery systems
+  * **Long Delays** (300-600 seconds / 5-10 minutes)
+    * For **stateful apps,** to finish in-progress session cleanly ( uploads, transactions)
+    * Graceful shutdowns for web applications
+* A **longer delay ensures** that the instance has more time to finish processing existing connections before being deregistered from the load balancer.
+* Complete removal of an attribute when sessions don't matter or when rapid scaling is essential, like testing to validate ASG behaviour.
 
 ### Session Affinity / Sticky cookies&#x20;
 
