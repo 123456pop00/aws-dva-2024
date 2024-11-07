@@ -18,6 +18,7 @@
   * [AMIs](development-with-aws-services/compute-ec2/amis.md)
   * [ELB & ASG](development-with-aws-services/compute-ec2/elb-and-asg/README.md)
     * [SSL/TLS](development-with-aws-services/compute-ec2/elb-and-asg/ssl-tls.md)
+    * [ASG](development-with-aws-services/compute-ec2/elb-and-asg/asg.md)
 * [Elastic Beanstalk](development-with-aws-services/elastic-beanstalk.md)
 * [S3](development-with-aws-services/s3.md)
 * [Serverless](development-with-aws-services/serverless/README.md)
