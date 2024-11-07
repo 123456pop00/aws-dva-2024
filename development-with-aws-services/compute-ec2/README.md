@@ -105,7 +105,7 @@ The **size** defines the **compute, memory, and networking capacity** within the
 
 When we create a web server for EC2 instance in **Networking** also allow for HTTP internet traffic &#x20;
 
-<figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
 
 #### Security Groups&#x20;
 

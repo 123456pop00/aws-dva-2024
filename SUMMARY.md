@@ -20,10 +20,12 @@
     * [SSL/TLS](development-with-aws-services/compute-ec2/elb-and-asg/ssl-tls.md)
     * [ASG](development-with-aws-services/compute-ec2/elb-and-asg/asg.md)
 * [Elastic Beanstalk](development-with-aws-services/elastic-beanstalk.md)
+* [RDS](development-with-aws-services/rds.md)
 * [S3](development-with-aws-services/s3.md)
 * [Serverless](development-with-aws-services/serverless/README.md)
   * [Lambda](development-with-aws-services/serverless/lambda/README.md)
     * [Page](development-with-aws-services/serverless/lambda/page.md)
+  * [DynamoDB](development-with-aws-services/serverless/dynamodb.md)
   * [API Gateway](development-with-aws-services/serverless/api-gateway.md)
 
 ## Security
