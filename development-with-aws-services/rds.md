@@ -61,28 +61,41 @@ a proprietary technology from AWS, and is designed to improve upon standard MySQ
 
 ## RDS Deployments
 
-RDS Multi-AZ deployments’ - high availability, not for scaling.
+**RDS Multi-AZ deployments’ - high availability, not for scaling.**
 
 * Typically SYNC replication to standby DB in another AZ&#x20;
+* **Automatic failover** works only in **Multi-AZ deployments**
 * Failover to cross AZ failover replica if main DB crashes, it ensures HA,  possible because there's one DNS name for main and standby DB
   * loss of instance stoarge
   * loss of AZ
   * loss of network
 * Data in Failover AZ is passive until RDS will trigger a failover, fully automatic
-* DR strategies
+* We have single static DNS  string like `jdbc:mysql://.rds.amazonaws.com:3306/yourdatabase,`thise allows for seamless failover to standby instance in another Availability Zone (AZ).
+
+
 
 &#x20;Multi-Region deployments -  purpose is disaster recovery and local performance.
 
 * Cross region replication costs
 * Good performance because they read from local DB
 
-**RDS Read replicas - purpose is scalability for reads.**&#x20;
+**RDS Read replicas - purpose is scalability (for READS), not HA.**
 
 Purpose to offload read-heavy traffic from the primary database to these replicas, improving the overall read performance.
 
-* replicas for reads, with ASYNC replication => reads are eventually consistent\*
-* can be Cross AZ or Cross Region or within AZ
-* replicas can be promoted to own DBs
+* Replicas for reads, have <mark style="color:purple;">ASYNC replication</mark> => reads are eventually consistent\*
+* Replicas can be Cross AZ or Cross Region or within AZ
+  * If your master DB is in a single AZ and you create **read replicas in different AZs**, you still don’t get automatic failover in the event of a primary DB failure -> need to **manually promote a read replica to master**
+* Each read replica has its **own DNS endpoint**. You can **connect** directly to a **specific** **read replica** using these endpoints to offload read traffic from the primary instance.
+
+```javascript
+//Read Replica 1
+jdbc:mysql://<read-replica-1-endpoint>.rds.amazonaws.com:3306/yourdatabase
+//Read Replica 2
+jdbc:mysql://<read-replica-2-endpoint>.rds.amazonaws.com:3306/yourdatabase
+```
+
+* Replicas can be promoted to master DBs -> **manual console, api, cli action.** The promotion process involves downtime during the transition from read replica to primary.
 * Ensure it is for SELECT type of queries, ie enable analytics reporting from DB besides main application reads / writes&#x20;
 * Exception for cross AZ (same Region) network costs ( as it is a managed RDS service) - no fee
 
@@ -96,12 +109,21 @@ Creates staging env. It copies a production database environment to a separate, 
 
 ## RDS Proxy&#x20;
 
-allows for apps to pool & share connections to RDS instead of establishing new
+allows for apps to pool & share connections to RDS instead of establishing new,&#x20;
+
+**Single Proxy Endpoint**: When you set up RDS Proxy, AWS provides you with a single endpoint for the proxy, such as:
+
+```bash
+jdbc:mysql://<rds-proxy-endpoint>.rds.amazonaws.com:3306/yourdatabase
+
+```
 
 * **Reduced database load**: By reusing existing connections, it minimizes the strain on RDS, especially during traffic spikes.
 * **Enhanced security**: RDS Proxy enforces **IAM authentication**, simplifying credentials management and reducing the risk of exposing database passwords.
 * **Lambda connection management:** lambdas often experience high concurrency and can create many database connections quickly. RDS Proxy **pools and reuses connections**, <mark style="color:purple;">which prevents Lambda from overwhelming the database with too many simultaneous connections.</mark>
-* No application code change, without a proxy, your application would need to handle failover logic manually,
+* No application code change, without a proxy, your application would need to handle failover logic manually
+* **Load Balancing for Many READ replicas:** For load balancing across read replicas, you can use a **proxy.**
+  * Replica **retains** its **own unique DNS endpoint** in addition to the RDS Proxy endpoint, so we can benefit from connection pooling, load balancing ,auto failover, but still use DNS endpoint for specialised workloads, like some ad-hoc Analytics or Reporting App connects directly to a specific replica
 * **VPC-Only Access**: RDS Proxy **never exposes** the database to the public internet; it is **restricted to your VPC**, ensuring private and secure access.
 
 ## **Security Details for RDS:**
@@ -131,7 +153,7 @@ Compatible open-source caching solutions: Valkey, Memcached and Redis OSS.
 
 * **Redis (replication)**: Best for advanced caching scenarios, real-time applications & HA , and use cases requiring persistence, replication, and high availability.
   * **Durability & AOF (Append-Only File)** is a persistence mechanism used by Redis to ensure data durability.
-  * Backup & restore
+  * ElastiCache Cluster to otimise  reads
 * **Memcached (sharding)**: Best for high-speed, simple caching scenarios where persistence and complex data structures are not needed, as it's not persistent, not HA.
   * Ideal performance for simple key-value pairs, with high-throughput, low-latency caching scenarios.
 
@@ -213,6 +235,42 @@ For mixed data types, where different data has unique expiration needs (e.g., us
 
 
 ## ElastiCache Strategies
+
+### Cache Aside / Lazy Loading - read optimisation :sleeping:
+
+**How it works:** The application is responsible for loading data into the cache when it is required.&#x20;
+
+:thumbsup: So only requested dat is cached. Fine-grained control over cache population, any failures are not critical.
+
+:thumbsdown: Cache **misses** may lead to extra database calls, as we making 3 API calls and requests are slower, outdated 'stale' data.
+
+1. Check cache for req. data
+2. if none -> DB run
+3. populate cache with req. data. + return response (data)
+
+### **Write-Through - write optimisation** :writing\_hand:
+
+* **How it works**: Cache is added or updated when database is updated. Used when the application frequently writes data and you want both the cache and database to stay in sync. So we write to DB + push to Cache
+
+:thumbsup: Cache is never stale.
+
+:thumbsdown: Slow, if application frequently writes data and you want both the cache and database to stay in sync. We have write penalty: 2 API calls for writing data, write takes longer than reads.&#x20;
+
+:thumbsup: Cache chun - a lot of never read data&#x20;
+
+### **Write-Behind (Write-Back)**:
+
+* **How it works**: Data is written to the cache and **not** immediately to the DB. The cache writes the data to the database **asynchronously** in the background. Suitable when you want to avoid slow database writes, such as for high-throughput systems.
+
+:thumbsdown: Risk of data loss if the cache is not synchronised properly.
+
+
+
+### **Time-Based Expiration (TTL)**:
+
+* **How it works**: Cached data has a **TTL** after which it is automatically evicted. deal for data that may become stale after a period, such as session data, authentication tokens, or frequently changing data.
+
+:thumbsdown: Expensive cache misses
 
 
 
