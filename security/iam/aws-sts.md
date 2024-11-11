@@ -187,6 +187,14 @@ This operation provides a mechanism for tying an enterprise identity store or di
 
 **GetSessionToken:** to obtain temporary security credentials that provide enhanced security, particularly with Multi-Factor Authentication (MFA). This adds an additional layer of security by ensuring that only users who have access to the MFA device can obtain the temporary credentials.
 
+1. Register MFA device for the user/role get device **arn**
+2. **In CLA**&#x20;
+
+`aws sts get-session-token --serial-number arn:aws:iam::123456789247:mfa/my-mfa-devicename --token-code 038969`
+
+3. set up profile a`ws configure --profile mfa-enabled-profile,` if not set up add toke credentials into `nvim ~/.aws/credentials`
+4. `export AWS_PROFILE=mfa-enabled-profile`
+
 ## Service Roles
 
 <details>
