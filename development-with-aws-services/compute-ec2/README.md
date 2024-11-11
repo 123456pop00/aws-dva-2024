@@ -16,6 +16,7 @@
   * upload common files from www
 * Each instance **type** offers a different balance of compute, memory, network, and storage resources.
 * According Responsibility **custom is responsible** for operating-system patches and updates on EC2 Instances.
+* IMDS v2 - need to obtain a token for Header as  `curl -H "X-aws-ec2-metadata-token:$TOKEN" http://169.254.169.254/latest/meta-data`[https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html)
 
 ## EC2
 

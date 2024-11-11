@@ -1,3 +1,7 @@
+---
+icon: lock
+---
+
 # VPC
 
 **VPC** ⇒ virtual private cloud, a private network to deploy resources
