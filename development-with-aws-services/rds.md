@@ -99,13 +99,13 @@ jdbc:mysql://<read-replica-2-endpoint>.rds.amazonaws.com:3306/yourdatabase
 * Ensure it is for SELECT type of queries, ie enable analytics reporting from DB besides main application reads / writes&#x20;
 * Exception for cross AZ (same Region) network costs ( as it is a managed RDS service) - no fee
 
-<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Blue /Green deployment
 
 Creates staging env. It copies a production database environment to a separate, synchronized staging environment. It stays in sync with the current production environment using logical replication.
 
-<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## RDS Proxy&#x20;
 
