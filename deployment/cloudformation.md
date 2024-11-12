@@ -133,7 +133,7 @@ Outputs:
 
 #### Useful Links
 
-
+[https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/gettingstarted.walkthrough.html#gettingstarted.walkthrough.viewapp](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/gettingstarted.walkthrough.html#gettingstarted.walkthrough.viewapp)
 
 [https://docs.aws.amazon.com/cli/latest/reference/cloudformation/#cli-aws-cloudformation](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/#cli-aws-cloudformation)
 
