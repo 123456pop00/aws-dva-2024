@@ -87,15 +87,47 @@ services:
 :cowboy:  **IAM Roles for ECS**
 
 * EC2 instance profile -> used By ECS Agent to make API calls to ECS service, send CloudWatch logs, to pull Docker images, SSM reference
+
+:card\_box: **Task placement + placement strategies**
+
+When task is started ECS must know where ( on which EC2 instance ) to place it.
+
+1. **Resource Availability**:
+   * The instance must have enough **CPU** and **memory** to meet the requirements specified in the task definition.
+2. **Task Placement Strategies** (Optional):
+   * Control how ECS distributes tasks across instances:
+     * **binpack**: Place tasks on the instance <mark style="color:blue;">with the least available CPU/memory to optimize resource usage. Cost saving, we max out instance.</mark>
+     * **random**: Randomly select an instance.
+     * **spread**: Distribute tasks evenly across instances, AZs, or custom attributes
+3. **Task Placement Constrains (**Optional):
+   * You can define constraints in the task definition or ECS service to restrict where tasks can run, such as:
+     * **Instance Type**: e.g., tasks can only run on `t3.large` instances.
+     * **Availability Zone**: Place tasks in specific AZs
+     * Custom Attributes: for example, `memeberOf`to only run on EC2 instances that match specific criteria.
+       * To isolate workloads by environment (e.g., dev, staging, production) when you have a single ECS cluster managing multiple environments. (e.g., `environment=prod` or `type=compute-optimized`), you can use `memberOf` to ensure tasks only run on instances matching those attributes.
+       *   Place tasks on specific EC2 instances based on hardware attributes (e.g., instance types, GPU availability, storage types).&#x20;
+
+           ```
+             "expression": "attribute:ecs.instance-type == t3.micro || attribute:ecs.instance-type == t3.small || attribute:ecs.instance-type == t3.medium"
+           ```
+       * To divide workloads by application types or roles (e.g., front-end, back-end, batch jobs) within the same cluster, e.g. `attribute:role=frontend`
+     * **`distinctInstance`** enforces placement logic directly, to achieve fault tolerance and prevent multiple tasks from being co-located on the same EC2 instance.
 {% endtab %}
 
 {% tab title="Fargate Launch Type - Serverless" %}
 * Fargate + EFS = ultimate serveless combination
 * **No EC2 instances to manage,** Fargate will scale according to your ASG policies **but will not upgrade instance type -** it will scale **horizontally**&#x20;
 * We only create ECS Task, based on CPU, RAM we need, **no EC2 instances will be created in our account**
-* You don’t manage EC2 instances or ASGs. AWS fully abstracts and provisions the underlying compute resources required for your ECS tasks.
-  * EC2 instances that Fargate uses are not visible in the **EC2 console**.
-  * You define **Service Auto Scaling policies to scale tasks directly to ASG for EC2 instances**.&#x20;
+*   You don’t manage EC2 instances or ASGs. AWS fully abstracts and provisions the underlying compute resources required for your ECS tasks.
+
+    * EC2 instances that Fargate uses are not visible in the **EC2 console**.
+    * You define **Service Auto Scaling policies to scale tasks directly to ASG for EC2 instances**.&#x20;
+
+
+
+:card\_box:**Task placement + placement statgies**
+
+EC2 instances are managed by you, so you don’t worry about placement
 {% endtab %}
 
 {% tab title="ECS Task Role" %}
@@ -133,13 +165,21 @@ NLB is recommended for high throughput applications or to pair with Private Link
 
 ### ECS Task: the smallest deployable unit of work in ECS.
 
-Filter launch type : EC2, Fargate or External
+ECS task definitions provide a cloud-native alternative to Docker Compose or Dockerfiles.
 
 Task Definitions (JSON) -> metadata / blueprint that specifies how Docker containers for ECS should run. Up to 10 containers per task definition.
 
 * **What to run**: Docker images, ports, and commands.
 * **How to run it**: Resources, roles, and network settings.
 * **Where to store data**: Volumes and persistent storage.
+
+#### **When ECS Task = Docker Compose**
+
+When your ECS **task definition** includes **multiple containers** running as a unit (e.g., web app + logging agent), it’s directly analogous to a **Docker Compose service definition** where multiple containers are configured to run together.
+
+#### **When ECS Task = Dockerfile**
+
+If your ECS task runs a **single container**, then the **Dockerfile** is equivalent to the container-specific configuration (image + build context), and the ECS task definition adds extra runtime configuration (e.g., CPU, memory, networking).
 
 #### **Core Components of a Task Definition** :white\_check\_mark:
 
@@ -219,6 +259,8 @@ Automatically increase :arrow\_double\_up: / decrease :arrow\_double\_down: ECS 
 
 
 #### Useful Links:
+
+[https://gallery.ecr.aws/](https://gallery.ecr.aws/)
 
 [https://explore.skillbuilder.aws/learn/course/external/view/elearning/14608/amazon-eks-for-developers-online-course-supplement](https://explore.skillbuilder.aws/learn/course/external/view/elearning/14608/amazon-eks-for-developers-online-course-supplement)
 
