@@ -41,7 +41,8 @@
 
 * [Developer Tools](deployment/developer-tools.md)
 * [CDK](deployment/cdk.md)
-* [CloudFormation](deployment/cloudformation.md)
+* [CloudFormation](deployment/cloudformation/README.md)
+  * [CF Demo Template](deployment/cloudformation/cf-demo-template.md)
 
 ## Troubleshooting and Optimization
 
