@@ -4,12 +4,32 @@ icon: display-code
 
 # CF Demo Template
 
-1. EC2 only template
-   1. ```bash
-      ImageId: ami-0658158d7ba8fd573 //From AMI catalog
-      ```
-2. Launch in CF
-3. Update by adding SG and Parameters manually via Edit in Infrastructure Composer + Validate
+Find Free Tier Eligible ami for EC2 from AMI Catalog
+
+`ImageId: ami-0658158d7ba8fd573`&#x20;
+
+**First Template**
+
+```yaml
+
+Resources:
+  MyWebServerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0658158d7ba8fd573
+      InstanceType: t3.micro
+
+```
+
+**Second Updated Template**
+
+Tags for name will force stack to replace the instance.
+
+<figure><img src="../../.gitbook/assets/CF-update.png" alt=""><figcaption></figcaption></figure>
+
+
+
+**Changes include 2 SGs and Parameters, added manually via Edit in Infrastructure Composer + Validate**
 
 ```yaml
 Description: EC2 + SG Simple CloudFormation Demo.
@@ -59,15 +79,17 @@ Resources:
           CidrIp: 0.0.0.0/0
 ```
 
-4.  Pick up Instance public IPv4 and ssh into it&#x20;
+**Pick up Instance public IPv4 and ssh into it**&#x20;
 
-    ```bash
-    ssh -i path/to/AccessKey.pem ec2-user@13.52.125.28
-    # check SG work
-    curl http://localhost
-    ```
-5. It will <mark style="color:red;">**not work in browser**</mark> :exclamation: as Application Not Running
-6. Install and Start
+```bash
+ssh -i path/to/AccessKey.pem ec2-user@13.52.125.28
+# check SG work
+curl http://localhost
+```
+
+**It will **<mark style="color:red;">**not work in browser**</mark> :exclamation: **as Application Not Running**
+
+**Install and Start httpd or nginx**
 
 ```bash
 sudo yum install httpd
@@ -75,7 +97,7 @@ sudo systemctl start httpd
 sudo netstat -tuln
 ```
 
-7. Verify it runs -> Look for `0.0.0.0:80` under `Local Address` with the state `LISTEN`.
+**Verify it runs -> Look for `0.0.0.0:80` under `Local Address` with the state `LISTEN`.**
 
 ```bash
 Proto Recv-Q Send-Q Local Address           Foreign Address         State
@@ -85,5 +107,5 @@ tcp6       0      0 :::22                   :::*                    LISTEN
 
 ```
 
-8. Curl localhost and output must be \<html> or open from Console&#x20;
+`curl http://localhost` again & output must be \<html> or open from public ip in browser&#x20;
 
