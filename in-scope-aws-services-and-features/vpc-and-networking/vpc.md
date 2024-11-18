@@ -96,7 +96,7 @@ Connect to VPCs with non overlapping CIDR (IP) ranges to route traffic between t
 
     1. targets specific IP routes in an Amazon VPC route table, in the form of a prefix-list, used for traffic destined to Amazon DynamoDB or S3
 
-    <figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+    <figure><img src="../../.gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
 
 VPC Endpoint Gateway: for S3 and DynamoDb
 

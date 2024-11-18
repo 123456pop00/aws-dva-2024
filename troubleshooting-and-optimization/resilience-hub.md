@@ -31,7 +31,7 @@ _AWS P formal framework to go over design iterrations._
 * Prepare for outages, by conducting testing and verification.
 * CI/CD integration.
 
-<figure><img src="../.gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (3) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Testing Resilience
 

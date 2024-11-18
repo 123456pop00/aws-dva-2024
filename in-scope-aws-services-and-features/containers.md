@@ -1,5 +1,16 @@
 # Containers
 
+* **ECS cluster** with the EC2 launch type is a logical grouping of EC2 instances (container instances) that ECS can use to run tasks and services.
+* **Service** (Service ≠ Container ) :cook: manages **tasks**. It ensures that a specific number of tasks (containers) are always running. For example:
+  * If you specify 3 tasks in a service, ECS ensures 3 containers are running.
+  * If one task crashes, ECS will automatically restart it.
+* **EC2 IAM Role**: One role for all EC2 instances in your cluster (manages ECS Agent).
+* **ECS Task Roles**: Defined per task definition, provides fine-grained permissions to the containers in that task.
+* **Task Definition** blueprint that defines the container :receipt::cook:
+*   **Task** is the actual running container :cookie:
+
+
+
 
 
 {% hint style="info" %}
@@ -80,7 +91,7 @@ services:
 * Each EC2 instance must run **ECS Agent** that will register in the ECS Cluster
 * Each Docker container will be placed accordingly onto the EC2 instance within a **Cluster**
 * You define and manage an **Auto Scaling Group (ASG)** for EC2 instances that make up your ECS cluster.
-  * ASG is visible and configurable in the **EC2 console**, giving you full control over the lifecycle and scaling of these EC2 instances.
+  * ASG is visible and configurable in the **EC2 console**, giving full control over the lifecycle and scaling of EC2 instances.
   * You are **responsible** for ensuring the EC2 instances have sufficient capacity (CPU/memory) to run all the ECS tasks.
   * If you scale up tasks but don’t have enough EC2 instances, some tasks will remain in a **PENDING** state until more instances are provisioned.
 
@@ -88,9 +99,14 @@ services:
 
 * EC2 instance profile -> used By ECS Agent to make API calls to ECS service, send CloudWatch logs, to pull Docker images, SSM reference
 
-:card\_box: **Task placement + placement strategies**
+:writing\_hand: **Task definition** is like a **blueprint** for container run app.
 
-When task is started ECS must know where ( on which EC2 instance ) to place it.
+* It specifies the **Docker image**, the CPU/memory requirements, environment variables, networking, ports.
+* It’s not tied to the cluster directly—it’s just the "instructions" ECS uses when launching a task or service.
+
+:card\_box: **Task placement + Placement strategies**
+
+When task is started ECS must know on which EC2 instance to place it.
 
 1. **Resource Availability**:
    * The instance must have enough **CPU** and **memory** to meet the requirements specified in the task definition.
@@ -99,7 +115,7 @@ When task is started ECS must know where ( on which EC2 instance ) to place it.
      * **binpack**: Place tasks on the instance <mark style="color:blue;">with the least available CPU/memory to optimize resource usage. Cost saving, we max out instance.</mark>
      * **random**: Randomly select an instance.
      * **spread**: Distribute tasks evenly across instances, AZs, or custom attributes
-3. **Task Placement Constrains (**Optional):
+3. **Task Placement Constrains** (Optional):
    * You can define constraints in the task definition or ECS service to restrict where tasks can run, such as:
      * **Instance Type**: e.g., tasks can only run on `t3.large` instances.
      * **Availability Zone**: Place tasks in specific AZs
@@ -125,9 +141,11 @@ When task is started ECS must know where ( on which EC2 instance ) to place it.
 
 
 
-:card\_box:**Task placement + placement statgies**
+:card\_box: **Task placement + placement statgies**
 
-EC2 instances are managed by you, so you don’t worry about placement
+Fargate handles resource allocation and placement based on what we define in task’s CPU and memory requirements i.e. **task definition.** But since we **don’t define EC2 instance-specific parameters** (like instance type) we **can't implement same task placement constrains**.&#x20;
+
+<mark style="color:blue;">**Task placement constraints**</mark> <mark style="color:blue;"></mark><mark style="color:blue;">such as affinity and spreading</mark> <mark style="color:blue;"></mark><mark style="color:blue;">**rely on the concept of placing tasks on specific EC2 instances**</mark> <mark style="color:blue;"></mark><mark style="color:blue;">within an ECS cluster.</mark> Fargate, however, is serverless, so there are **no specific EC2 instances** you are responsible for.
 {% endtab %}
 
 {% tab title="ECS Task Role" %}
@@ -163,11 +181,11 @@ We can interface ECS Cluster with ALB ( which will have inbound on a port 80/443
 
 NLB is recommended for high throughput applications or to pair with Private Link
 
-### ECS Task: the smallest deployable unit of work in ECS.
+### ECS Task: the smallest deployable unit of work for EC2 Launch type & Fargate
 
 ECS task definitions provide a cloud-native alternative to Docker Compose or Dockerfiles.
 
-Task Definitions (JSON) -> metadata / blueprint that specifies how Docker containers for ECS should run. Up to 10 containers per task definition.
+Task Definitions (JSON) -> metadata / **blueprint** that specifies how Docker containers for ECS should run. Up to 10 containers per task definition.
 
 * **What to run**: Docker images, ports, and commands.
 * **How to run it**: Resources, roles, and network settings.
@@ -187,6 +205,10 @@ If your ECS task runs a **single container**, then the **Dockerfile** is equival
    * Specifies the Docker images (e.g., `nginx:latest` or a custom ECR image).
    * Resource requirements (CPU, memory) for container
    * Port mappings `"containerPort": 80, "hostPort": 80`
+     * **Container Port**:  port your application listens to inside the container (e.g., `80`).
+     * **Host Port:** port number on the **EC2 instance** (host) that forwards traffic to the container running on it.
+       * To run same  Docker container on the same EC2 container instance set host port = 0 (or empty) to allows multiple containers of the same type to launch -> This avoids conflicts and allows **multiple containers** of the same type to run on the same EC2 instance without fighting over the same port.
+         * When we define **only container port and leave **<mark style="color:blue;">**host as 0 or empty we get Dynamic Host Port Mapping**</mark>
    * Environment variables passed into the container ( any sensitive variables typically in .env) -> use SSM Parameter Store or Secrets Manager to fetch them at run time within task
      * Bulk evn variables loading - fetching from S3
    * Logging, and health checks for each container in the task
@@ -245,7 +267,7 @@ Automatically increase :arrow\_double\_up: / decrease :arrow\_double\_down: ECS 
 2. Memory - RAM
 3. ALB count per target
 
-* Target tracking - specific cludwatch&#x20;
+* Target tracking - specific cloudwatch&#x20;
 * Step Scaling
 * Scheduled Scaling ( pattern)
 
@@ -255,6 +277,31 @@ Automatically increase :arrow\_double\_up: / decrease :arrow\_double\_down: ECS 
 * **ECS Cluster Capacity Provider -** automatically scales the infrastructure for ECS tasks \*\*\* better for ECS
 
 
+
+<details>
+
+<summary>ECR</summary>
+
+To pull a Docker image from a **private Amazon ECR repository**
+
+1. Login / Authenticate Docker to ECR `aws ecr get-login-password`` `<mark style="color:red;">`--region $aws_region`</mark>` ``| docker login --username AWS --password-stdin`` `<mark style="color:red;">`$ecr_url`</mark>
+2. Pull the Docker Image `docker pull`` `<mark style="color:red;">`$ecr_docker_iamge_url`</mark>
+
+:exclamation: **Authentication and pulling must happen in the same region**. You can't auth in one region and pull image from another.
+
+* Authenticate Docker to your ECR:
+*   **Authentication**: The `aws ecr get-login-password` command gets the token for **one region**, and the token is specific to that region.
+
+    ```bash
+    aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.eu-north-1.amazonaws.com
+    ```
+*   Pull the image:
+
+    ```bash
+    docker pull 123456789012.dkr.ecr.eu-north-1.amazonaws.com/my-app-repo:latest
+    ```
+
+</details>
 
 
 
