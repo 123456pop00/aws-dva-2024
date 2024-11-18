@@ -1,6 +1,6 @@
 # CloudFormation
 
-Service that models and helps set up resources, you create a template that describes all the AWS resources that you want (like Amazon EC2 instances or Amazon RDS DB instances), and CloudFormation provisions and configures those.&#x20;
+Service that models and helps set up resources, you create a template that **describes all the AWS resources that you want** (like Amazon EC2 instances or Amazon RDS DB instances), and CloudFormation provisions and configures those. On stack delete all underlying resources are deleted.
 
 ## Benefits
 
@@ -18,15 +18,55 @@ Service that models and helps set up resources, you create a template that descr
 
 ## Templates
 
-When you use CloudFormation, you work with _templates_ and _stacks_. You create templates to describe your AWS resources and their properties.
-
-A CloudFormation template is a JSON or YAML formatted text file. You can save these files with any extension, such as `.json`, `.yaml`, `.template`, or `.txt`. CloudFormation uses these templates as blueprints for building your AWS resources.
+When you use CloudFormation, you work with **templates** and **stacks**. CloudFormation uses these templates as blueprints for building your AWS resources.
 
 ### Template Sections
 
 Every CloudFormation template consists of one or more sections, each serving a specific purpose.
 
+:exclamation: <mark style="color:blue;">**Resources**</mark><mark style="color:blue;">: (Required)</mark> The AWS resources you want to create (e.g., EC2 instances, S3 buckets).
 
+* Declared and can reference each other
+
+```yaml
+Resources:
+  <ResourceLogicalName>:
+    Type: <ResourceType>
+    Properties:
+      <Property1>: <Value1>
+      <Property2>: <Value2>
+      ...
+      #results into 
+Resources:
+  MyS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-bucket-name
+
+```
+
+**`service-provider::service-name::data-type-name`** = AWS::S3::Bucket or AWS::EC2::Instance. All Refs Link:[https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html)
+
+<mark style="color:blue;">**AWSTemplateFormatVersion**</mark><mark style="color:blue;">: (</mark>Optional) The version of the CloudFormation template format.
+
+<mark style="color:blue;">**Description**</mark><mark style="color:blue;">:</mark> (Optional) A brief description of the template's purpose.
+
+<mark style="color:blue;">**Parameters**</mark>: (Optional) User-defined input values for the template (e.g., instance size, key pairs, DB username).&#x20;
+
+* Useful if you need to reuse them for div env or users
+* Leverage **!Ref** function to reference all parameters
+* Include constrains and validations like RegEx and default value
+* If the resource configuration is likely to change -> make it a parameter :white\_check\_mark: **so you won't nee to update an existing template**
+
+**Outputs**: (Optional) Values to be returned after the stack is created, like the public IP of an EC2 instance.
+
+**Mappings**: (Optional) A way to define static data like region-specific AMI IDs.
+
+**Conditions**: (Optional) Logic to control resource creation based on conditions (e.g., create resources only in certain regions).
+
+**Transform**: (Optional) Used if you're using macros or AWS-specific functions like AWS::Include for Lambda.
+
+**Metadata**: (Optional) Extra information or descriptive data about the template.
 
 ### CloudFormation template formats <a href="#template-formats" id="template-formats"></a>
 
@@ -84,7 +124,7 @@ CloudFormation templates are divided into different sections, and each section i
 
 * In JSON-formatted templates, comments are not supported. JSON, by design, doesn't include a syntax for comments, which means you can't add comments directly within the JSON structure, but to include explanatory notes / documentation by adding **metadata**
 
-#### YAML
+#### YAML :heart\_eyes::heart\_hands:
 
 <details>
 
