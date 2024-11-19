@@ -27,6 +27,7 @@
     * [Page](development-with-aws-services/serverless/lambda/page.md)
   * [DynamoDB](development-with-aws-services/serverless/dynamodb.md)
   * [API Gateway](development-with-aws-services/serverless/api-gateway.md)
+* [SQS](development-with-aws-services/sqs.md)
 
 ## Security
 
