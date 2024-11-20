@@ -4,7 +4,13 @@ icon: nfc-magnifying-glass
 
 # CloudWatch
 
-## &#x20;**Monitoring Metrics**
+CloudWatch + provide the 3 pillars (Metric, Logs & Traces) of an observability solution.
+
+To understand system signals and workload you need data from **collectors, SDKs and instrumentation. AWS Collectors include CloudWatch, X-Ray agents, ADOT ( open source ).**&#x20;
+
+**Then you pass to Insights Tier  -> OpenSearch Service**
+
+## &#x20;**Monitoring Metrics - signals of the system environment**
 
 * **Default Metrics**: Automatically collects metrics from AWS services (e.g., EC2 CPUUtilization, RDS FreeStorageSpace).
 * **Granularity**: Supports metrics at **1-minute** (standard) or **1-second** intervals (detailed monitoring).
@@ -14,7 +20,7 @@ icon: nfc-magnifying-glass
 
 <details>
 
-<summary>CLI: aws cloudwatch put-metric-data</summary>
+<summary>Custom namespace: CLI: aws cloudwatch put-metric-data</summary>
 
 ```
 aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file://metric.json
@@ -32,11 +38,15 @@ aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file://
 
 
 
-## **Logs**
+## **Logs - sequence aware\***
 
 * **Log Ingestion**: Collects logs from AWS services (e.g., Lambda, API Gateway, VPC Flow Logs) and custom applications.
+  *   Ensue they are not tampered -> **enable** Log File Validation
+
+
 * **Log Retention**: Logs can be stored indefinitely or with user-defined retention policies. <mark style="color:blue;">**By default Logs never expire**</mark>
-* **Insights**: Provides a query language to analyse logs and generate insights.
+* **Insights**: Provides a **query** language to analyse logs and generate insights.
+  * <mark style="color:blue;">**Logs Insights ->**</mark>** 'search engine'** for logging data, when data is received it can be parsed and index and we can look for specific value inside CW console.
 
 ## **Alarms**
 
@@ -98,4 +108,5 @@ aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file://
 #### Useful links
 
 * [https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/set-alarm-state.html](https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/set-alarm-state.html)
+* [https://aws-otel.github.io/](https://aws-otel.github.io/)
 

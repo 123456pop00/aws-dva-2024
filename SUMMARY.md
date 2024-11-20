@@ -49,6 +49,7 @@
 
 ## Troubleshooting and Optimization
 
+* [Observability](troubleshooting-and-optimization/observability.md)
 * [CloudWatch](troubleshooting-and-optimization/cloudwatch.md)
 * [X-Ray](troubleshooting-and-optimization/x-ray.md)
 * [Resilience Hub](troubleshooting-and-optimization/resilience-hub.md)

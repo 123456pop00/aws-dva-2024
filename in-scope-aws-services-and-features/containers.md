@@ -1,5 +1,7 @@
 # Containers
 
+
+
 * **ECS cluster** with the EC2 launch type is a logical grouping of EC2 instances (container instances) that ECS can use to run tasks and services.
 * **Service** (Service ≠ Container ) :cook: manages **tasks**. It ensures that a specific number of tasks (containers) are always running. For example:
   * If you specify 3 tasks in a service, ECS ensures 3 containers are running.
@@ -307,7 +309,6 @@ To pull a Docker image from a **private Amazon ECR repository**
 
 #### Useful Links:
 
-[https://gallery.ecr.aws/](https://gallery.ecr.aws/)
-
-[https://explore.skillbuilder.aws/learn/course/external/view/elearning/14608/amazon-eks-for-developers-online-course-supplement](https://explore.skillbuilder.aws/learn/course/external/view/elearning/14608/amazon-eks-for-developers-online-course-supplement)
-
+* [https://gallery.ecr.aws/](https://gallery.ecr.aws/)
+* [https://explore.skillbuilder.aws/learn/course/external/view/elearning/14608/amazon-eks-for-developers-online-course-supplement](https://explore.skillbuilder.aws/learn/course/external/view/elearning/14608/amazon-eks-for-developers-online-course-supplement)
+* [https://catalog.workshops.aws/ecs-immersion-day/en-US/10-about-ecs](https://catalog.workshops.aws/ecs-immersion-day/en-US/10-about-ecs)
