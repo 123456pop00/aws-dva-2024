@@ -9,7 +9,7 @@ icon: nfc-magnifying-glass
 * **Default Metrics**: Automatically collects metrics from AWS services (e.g., EC2 CPUUtilization, RDS FreeStorageSpace).
 * **Granularity**: Supports metrics at **1-minute** (standard) or **1-second** intervals (detailed monitoring).
 * **Custom Metrics**: Allows users to publish their own application metrics via the **PutMetricData API**. [https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/put-metric-data.html](https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/put-metric-data.html)
-  * Standard 1 minute of High resolution&#x20;
+  * Standard 1 minute of High resolution 1 second <mark style="color:blue;">**but Alarms can process 10s intervals**</mark> :alarm\_clock: :exclamation::warning:
   * Time point from two weeks before in the past and 2hrs in the future
 
 <details>
@@ -35,8 +35,8 @@ aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file://
 ## **Logs**
 
 * **Log Ingestion**: Collects logs from AWS services (e.g., Lambda, API Gateway, VPC Flow Logs) and custom applications.
-* **Log Retention**: Logs can be stored indefinitely or with user-defined retention policies.
-* **Insights**: Provides a query language to analyze logs and generate insights.
+* **Log Retention**: Logs can be stored indefinitely or with user-defined retention policies. <mark style="color:blue;">**By default Logs never expire**</mark>
+* **Insights**: Provides a query language to analyse logs and generate insights.
 
 ## **Alarms**
 
@@ -44,11 +44,11 @@ aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file://
 * **Actions**: Alarms can notify users via Amazon SNS, perform Auto Scaling, or stop/start/terminate instances.
   * Emulate the state for CPU etc [https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/set-alarm-state.html](https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/set-alarm-state.html)
 * **Composite Alarms**: Combine multiple alarms into a single evaluation - **reduce alarm noise**&#x20;
-  * Alert me if CPU is high and IOPS are low -> sign of bottleneck, but don't alret if both a high within a threshold (value and time)
+  * Alert me if CPU is high and IOPS are low -> sign of bottleneck, but don't alert if both a high within a threshold (value and time)
 
 <details>
 
-<summary>CLI: aws cloudwatch set-alarm-state </summary>
+<summary>CLI: aws cloudwatch set-alarm-state (Testing)</summary>
 
 **CASE - build it alarms in EC2 per instance**
 
@@ -86,11 +86,9 @@ aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file://
 
 </details>
 
-<figure><img src="../.gitbook/assets/CloudWatchAgentServer.png" alt=""><figcaption></figcaption></figure>
 
 
-
-## **CloudWatch Events / EventBridge**
+## **EventBridge**
 
 * **Event Triggers**: Monitors AWS service changes (e.g., instance state changes) and triggers automated actions.
 * **Integration**: Works with Lambda, Step Functions, and more for event-driven workflows.
