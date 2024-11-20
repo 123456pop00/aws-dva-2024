@@ -28,6 +28,8 @@
   * [DynamoDB](development-with-aws-services/serverless/dynamodb.md)
   * [API Gateway](development-with-aws-services/serverless/api-gateway.md)
 * [SQS](development-with-aws-services/sqs.md)
+* [KDS](development-with-aws-services/kds.md)
+* [Firehose & Managed Apache Flink](development-with-aws-services/firehose-and-managed-apache-flink.md)
 
 ## Security
 
@@ -47,6 +49,8 @@
 
 ## Troubleshooting and Optimization
 
+* [CloudWatch](troubleshooting-and-optimization/cloudwatch.md)
+* [X-Ray](troubleshooting-and-optimization/x-ray.md)
 * [Resilience Hub](troubleshooting-and-optimization/resilience-hub.md)
 * [Integrations](integrations/README.md)
   * [Step Functions](integrations/step-functions.md)

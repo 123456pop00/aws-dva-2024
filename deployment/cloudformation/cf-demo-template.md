@@ -109,3 +109,15 @@ tcp6       0      0 :::22                   :::*                    LISTEN
 
 `curl http://localhost` again & output must be \<html> or open from public ip in browser&#x20;
 
+#### Additional Config:
+
+1. In shell check attached SG&#x20;
+
+`aws ec2 describe-instances --query "Reservations[`_`].Instances[`_`].{ID:InstanceId,SecurityGroups:SecurityGroups}`
+
+2. Fix port 80 to be open&#x20;
+
+<figure><img src="../../.gitbook/assets/cli-cmd-modify-SG.png" alt=""><figcaption></figcaption></figure>
+
+
+
