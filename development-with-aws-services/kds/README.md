@@ -18,7 +18,7 @@ icon: arrow-progress
 
 Goal is to stream **reliable events in KDS**&#x20;
 
-<figure><img src="../.gitbook/assets/image (11).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (11).png" alt=""><figcaption></figcaption></figure>
 
 * **ECS Service** receives HTTP requests, processes the data, and stores it in **DynamoDB**.
   * If instance cannot process data, it sends it to the **SQS -> SendMessage API** to **DLQ**.&#x20;

@@ -46,7 +46,39 @@ icon: eye
       2. Container health / reboots. Do _all_ workloads need to care about CPUUtilisation?
       3. Integration health&#x20;
 
-## Open-source patterns
+## Hybrid / Open-source stacks
+
+AWS services as an extension to the hybrid environments.
+
+<figure><img src="../.gitbook/assets/hybrid-workloads.png" alt=""><figcaption></figcaption></figure>
+
+## Open-native patterns
+
+#### Concerns around open source solutions -> managed services address them\*
+
+* Anxiety around security & compliance
+* Support & versioning of vulnerabilities
+* Vendor lock in for observability solution, you need to rewrtie application to match vensor -> OpenTelemetry projects
+
+#### Open Source Managed Services
+
+* Distro for OpenTelemetry (ADOT)
+  * ![](../.gitbook/assets/openTelemetry.png)
+*   Managed Prometheus&#x20;
+
+    * query language to monitor containerised workloads
+    * good alerting rules ( ingest, high cardinality metrics)
+    * JMX exporters and other 100+
+    * <mark style="color:purple;">hard to provision for high workloads \* for just observability solution not critial appplciation</mark>
+    * ![](../.gitbook/assets/prometheus-setup.png)
+
+
+* Managed Grafana
+  * Rich Visualisation solution
+
+####
+
+
 
 
 

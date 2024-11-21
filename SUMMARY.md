@@ -28,7 +28,8 @@
   * [DynamoDB](development-with-aws-services/serverless/dynamodb.md)
   * [API Gateway](development-with-aws-services/serverless/api-gateway.md)
 * [SQS](development-with-aws-services/sqs.md)
-* [KDS](development-with-aws-services/kds.md)
+* [KDS](development-with-aws-services/kds/README.md)
+  * [KCL](development-with-aws-services/kds/kcl.md)
 * [Firehose & Managed Apache Flink](development-with-aws-services/firehose-and-managed-apache-flink.md)
 
 ## Security
