@@ -7,7 +7,7 @@ icon: file-certificate
 * **SSL** is deprecated and **not recommended** for use due to security vulnerabilities.
 * **TLS** is the modern standard, more secure and widely used today
   * Uses **stronger encryption algorithms**, such as AES (Advanced Encryption Standard)
-  * Addressed and patched several vulnerabilities that were present in **SSL**, including the **POODLE (**Padding Oracle On Downgraded Legacy Encryption**)**, **BEAST(**Browser Exploit Against SSL/TLS**)**, and **RC4 bias**
+  * Addressed and patched several vulnerabilities that were present in **SSL**, including the **POODLE (**&#x50;adding Oracle On Downgraded Legacy Encryptio&#x6E;**)**, **BEAST(**&#x42;rowser Exploit Against SSL/TL&#x53;**)**, and **RC4 bias**
 
 1. **Certificate Authority (CA)**: A trusted organization called a Certificate Authority (like Let’s Encrypt, DigiCert, or Comodo) issues certificates.
 2. **Request Process**:

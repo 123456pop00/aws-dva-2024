@@ -87,7 +87,7 @@ ssh -i path/to/AccessKey.pem ec2-user@13.52.125.28
 curl http://localhost
 ```
 
-**It will **<mark style="color:red;">**not work in browser**</mark> :exclamation: **as Application Not Running**
+**It will&#x20;**<mark style="color:red;">**not work in browser**</mark> :exclamation: **as Application Not Running**
 
 **Install and Start httpd or nginx**
 

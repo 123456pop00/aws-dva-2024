@@ -210,7 +210,7 @@ If your ECS task runs a **single container**, then the **Dockerfile** is equival
      * **Container Port**:  port your application listens to inside the container (e.g., `80`).
      * **Host Port:** port number on the **EC2 instance** (host) that forwards traffic to the container running on it.
        * To run same  Docker container on the same EC2 container instance set host port = 0 (or empty) to allows multiple containers of the same type to launch -> This avoids conflicts and allows **multiple containers** of the same type to run on the same EC2 instance without fighting over the same port.
-         * When we define **only container port and leave **<mark style="color:blue;">**host as 0 or empty we get Dynamic Host Port Mapping**</mark>
+         * When we define **only container port and leave&#x20;**<mark style="color:blue;">**host as 0 or empty we get Dynamic Host Port Mapping**</mark>
    * Environment variables passed into the container ( any sensitive variables typically in .env) -> use SSM Parameter Store or Secrets Manager to fetch them at run time within task
      * Bulk evn variables loading - fetching from S3
    * Logging, and health checks for each container in the task

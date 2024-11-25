@@ -28,9 +28,7 @@ aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file://
 
 * Upload custom dummy json with metrics to CloudShell, all uploaded files are in `/home/cloudshell-user`
 
-<!---->
-
-* In cloudShell run **PutMetricData**&#x20;
+- In cloudShell run **PutMetricData**&#x20;
 
 `aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file:///home/cloudshell-user/customMetrics.json`
 
@@ -46,7 +44,7 @@ aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file://
 
 * **Log Retention**: Logs can be stored indefinitely or with user-defined retention policies. <mark style="color:blue;">**By default Logs never expire**</mark>
 * **Insights**: Provides a **query** language to analyse logs and generate insights.
-  * <mark style="color:blue;">**Logs Insights ->**</mark>** 'search engine'** for logging data, when data is received it can be parsed and index and we can look for specific value inside CW console.
+  * <mark style="color:blue;">**Logs Insights ->**</mark>**&#x20;'search engine'** for logging data, when data is received it can be parsed and index and we can look for specific value inside CW console.
 
 ## **Alarms**
 

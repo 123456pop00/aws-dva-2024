@@ -29,7 +29,7 @@ icon: lock-keyhole
 
     * AWS provides guidelines for access key rotation every 90 days.
 
-    <figure><img src="../../.gitbook/assets/image (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
+    <figure><img src="../../.gitbook/assets/image (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 <figure><img src="../../.gitbook/assets/IAM.png" alt=""><figcaption></figcaption></figure>
 
@@ -461,6 +461,6 @@ The **Lambda Execution Role** is an **IAM Role** that has both **permissions** (
 
 #### Useful Links
 
-[https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_elements.html](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_elements.html)
+[https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_elements.html](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements.html)
 
-[https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_variables.html#policy-vars-using-variables](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_variables.html#policy-vars-using-variables)
+[https://docs.aws.amazon.com/IAM/latest/UserGuide/reference\_policies\_variables.html#policy-vars-using-variables](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-using-variables)

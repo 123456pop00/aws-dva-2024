@@ -1,6 +1,12 @@
+---
+icon: circle-exclamation-check
+---
+
 # Resilience Hub
 
 > A central place to define, validate and track the resiliency of your applicaion.  Provides architectural guidance for improving application resiliency, implementing tests, alarms, SOPs( standard ops procedures) that you can deploy and run in CI/CD pipeline.
+
+<div align="left"><figure><img src="../.gitbook/assets/chaos_eng_quote.png" alt="" width="375"><figcaption></figcaption></figure></div>
 
 _Application Resilience - ability to maintain the availability and recover from failure, disruption within_ :clock2: _RTO (Recovery Time Objective, ie time an application can be down without causing significant damage)  and PPO (Recovery Point Objective)._ RPO helps determine how much data a company can tolerate losing during an unforeseen event.
 
@@ -39,7 +45,7 @@ Hub is a fully managed service that provides FIS experiments
 
 Fault injection is a practice in chaos engineering of stressing an application in testing or production environments by creating disruptive events, such as sudden increase in CPU or memory consumption, observing how the system responds, and implementing improvements → helps uncover bugs, 🐞 bottlenecks 🧣 and issues by :
 
-*   Simulate a wide range of failures. **Synthetic CloudWatch Analysis using Canaries )**Canaries are scripts that run user journeys as a custom file or from aws pre-build template. **Best practice:** use private VPC endpoint to connect to your **pre-production / test resources**)
+*   Simulate a wide range of failures. **Synthetic CloudWatch Analysis using Canaries )**&#x43;anaries are scripts that run user journeys as a custom file or from aws pre-build template. **Best practice:** use private VPC endpoint to connect to your **pre-production / test resources**)
 
     <figure><img src="../.gitbook/assets/Screenshot 2024-11-01 at 10.56.42.png" alt=""><figcaption></figcaption></figure>
 * Validate that monitors and alarms identify the correct outage.
@@ -78,6 +84,10 @@ for most critical applications
 ## Failure Design Patterns
 
 _<mark style="color:red;">\*operate under assumption that dependancies will fail\*</mark>_
+
+<div align="left"><figure><img src="../.gitbook/assets/control_plane.png" alt="" width="375"><figcaption></figcaption></figure></div>
+
+
 
 _**Is it a control plane or data plane issue?** remove control plane dependancies_
 
@@ -163,7 +173,7 @@ $$
 ## Evaluate & test
 
 * RCA  (root cause analysis ) is "not :point\_right: finger pointing process"
-* Do Fault injection and&#x20;
+* Do Fault injection &#x20;
 
 
 
