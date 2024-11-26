@@ -264,5 +264,15 @@ Serverless Video Transcoding ( _video transcoding is something that has been a v
 
 `aws lambda update-function-configuration --function-name foo --timeout 10`
 
+aws lambda create-function\
+\--function-name MyLambdaFunction\
+\--runtime nodejs20.x\
+\--role arn:aws:iam::123456789012:role/MyLambdaRole\
+\--handler index.handler\
+\--timeout 10\
+\--memory-size 128\
+\--description "Lambda function with X-Ray tracing"\
+\--zip-file fileb://function.zip
+
 </details>
 
