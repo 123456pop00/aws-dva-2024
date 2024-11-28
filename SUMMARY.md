@@ -56,4 +56,5 @@
 * [X-Ray](troubleshooting-and-optimization/x-ray.md)
 * [Resilience Hub](troubleshooting-and-optimization/resilience-hub.md)
 * [Integrations](integrations/README.md)
+  * [API GW](troubleshooting-and-optimization/integrations/api-gw.md)
   * [Step Functions](integrations/step-functions.md)
