@@ -103,22 +103,96 @@ API GW Stage Versioning +  Lambda Aliases -> **maintain backward compatability f
 `arn:aws:lambda:eu-north-1:05664565247:function:lambda-function-name:${stageVariables.lambdaAlias}`
 
 * arn:aws:lambda:eu-north-1:060683702247:function:lambda-foo:DEV
-* arn:aws:lambda:eu-north-1:060683702247:function:lambda-foo:PROD
+* arn:aws:lambda:eu-north-1:060683702247:function:lambda-foo:UAT
 
 _You defined your Lambda function as a stage variable. Run the following AWS CLI command to ensure you have the appropriate policy for this function. Replace the stage variable in the function-name parameter with the necessary function name.Add permission command_
 
 **Allow DEV alias to invoke function**
 
+<figure><img src="../../.gitbook/assets/stage-vars.png" alt=""><figcaption></figcaption></figure>
+
 ```bash
 aws lambda add-permission \
---function-name "arn:aws:lambda:eu-north-1:060683702247:function:lambda-stage-vars-GET:DEV" \
---source-arn "arn:aws:execute-api:eu-north-1:060683702247:amzefzxc47/*/GET/stage-variables" \
+#-function-name "arn:aws:lambda:eu-north-1:0102030405067:function:lambda-foo:UAT" \
+--function-name "arn:aws:lambda:eu-north-1:0102030405067:function:lambda-foo:DEV" \
+--source-arn "arn:aws:execute-api:eu-north-1:0102030405067:amzefzxc47/*/GET/stage-variables" \
 --principal apigateway.amazonaws.com \
 --statement-id b7a1d265-018d-4fdb-9c94-73dda8f879a0 \
 --action lambda:InvokeFunction
 ```
 
+Will allow to test
+
+<figure><img src="../../.gitbook/assets/test-api-gw-lambdaAlias.png" alt=""><figcaption></figcaption></figure>
+
+### Canary Deployment
 
 
-```
-```
+
+{% tabs %}
+{% tab title="Canary🦜" %}
+**Definition**: A deployment strategy that allows routing a <mark style="background-color:yellow;">small percentage of traffic</mark> to a new version of your API Gateway stage configuration while keeping the majority of traffic on the current version.
+
+* **Key Feature**: Canary deployments can test incremental changes without replacing the entire stage.
+* **Focus**: Canary deployments test API Gateway-specific features like:
+  * Request/response mappings.
+  * New stage variables or settings.
+  * Integration with multiple services (e.g., Lambda, Step Functions).
+  * Caching or throttling configurations.
+* **Traffic Handling**: Splits API traffic by percentage, e.g., 10% to the canary version and 90% to the current stable version.
+{% endtab %}
+
+{% tab title="Blue 🦋 /Green 🐸 " %}
+**Definition**: A deployment strategy where two environments exist <mark style="background-color:blue;">simultaneously</mark>—"blue" (current/stable) and "green" (new/testing). Traffic is gradually shifted from blue to green, allowing a complete rollback if issues arise.
+
+* **Key Feature**: Blue-green deployments with Lambda often leverage **Lambda aliases** and **weighted routing** for traffic splitting.
+* **Focus**: Targets **Lambda function code and configuration updates**, such as:
+  * Function logic changes.
+  * Memory allocation or timeout adjustments.
+  * Integration at the function level, not API-wide.
+* **Traffic Handling**: Splits traffic at the function level, directing portions to different Lambda versions via weighted aliases.
+{% endtab %}
+{% endtabs %}
+
+#### **When to Use Canary vs. Blue-Green?**
+
+| **API-wide changes**               | ✅ Yes | ❌ No  |
+| ---------------------------------- | :---: | ----- |
+| **Single Lambda update**           |  ❌ No | ✅ Yes |
+| **End-to-end integration testing** | ✅ Yes | ❌ No  |
+| **Function-specific testing**      |  ❌ No | ✅ Yes |
+
+**When to use:**
+
+* When the change impacts the entire API Gateway configuration or stage settings.
+* When testing involves multiple integrated resources (e.g., Lambda, Step Functions, DynamoDB).
+* For validating broader, end-to-end API changes that span the infrastructure.
+
+#### **API Gateway Canary Deployments:**
+
+* **Scope**: Operates at the API Gateway stage level. Divides traffic between API deployments.&#x20;
+* **Use Case**: Allows you to roll out a new version of the **entire API** to a subset of users. Backward compatabiltiy for breaking changes.
+* **Control**:
+  * Canary settings can route a percentage of API traffic (e.g., 90/10) to a new deployment in the **canary stage**.
+  * This includes all resources integrated with the API, not just a single Lambda function.
+* **Benefits**:
+  1. **End-to-End Testing**: Canary deployments can test changes in the broader system (e.g., changes in API Gateway stage configuration, Lambda function, IAM policies, etc.).
+  2. **Validation of API-level changes**: It tests everything that happens **before** the Lambda is invoked, such as:
+     * Request/response transformations.
+     * API Gateway throttling or caching changes.
+  3. **Incorporates Multiple Backends**: If your API Gateway stage integrates with multiple backends (e.g., Lambda, DynamoDB, Step Functions), the canary rollout spans the entire infrastructure.
+* **Limitation**: The focus is broader than function-level updates, and it requires managing deployments at the API Gateway stage level.
+
+
+
+#### Deploying to Canary:
+
+1. First configure arn: version1  on resource like /featured-blogs&#x20;
+2. Deploy APIs to 'canary\_stage'
+3. Reconfigure /featured-blogs methods to point to lambda arn: version2 + Deploy
+4. configure Canary
+
+<div><figure><img src="../../.gitbook/assets/canary-test.png" alt=""><figcaption></figcaption></figure> <figure><img src="../../.gitbook/assets/promote-canary.png" alt=""><figcaption></figcaption></figure></div>
+
+
+
