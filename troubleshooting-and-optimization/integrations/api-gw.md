@@ -96,5 +96,29 @@ What I get from API GW Event:
 }
 ```
 
+API GW Stage Versioning +  Lambda Aliases -> **maintain backward compatability for old API version when we introduced breaking changes** :scream\_cat:
+
+1. Getting prod / dev aliases of lambda when we create method / integration request for lambda, its ARN will mention alias for mapping to specific stage .
+
+`arn:aws:lambda:eu-north-1:05664565247:function:lambda-function-name:${stageVariables.lambdaAlias}`
+
+* arn:aws:lambda:eu-north-1:060683702247:function:lambda-foo:DEV
+* arn:aws:lambda:eu-north-1:060683702247:function:lambda-foo:PROD
+
+_You defined your Lambda function as a stage variable. Run the following AWS CLI command to ensure you have the appropriate policy for this function. Replace the stage variable in the function-name parameter with the necessary function name.Add permission command_
+
+**Allow DEV alias to invoke function**
+
+```bash
+aws lambda add-permission \
+--function-name "arn:aws:lambda:eu-north-1:060683702247:function:lambda-stage-vars-GET:DEV" \
+--source-arn "arn:aws:execute-api:eu-north-1:060683702247:amzefzxc47/*/GET/stage-variables" \
+--principal apigateway.amazonaws.com \
+--statement-id b7a1d265-018d-4fdb-9c94-73dda8f879a0 \
+--action lambda:InvokeFunction
+```
 
 
+
+```
+```
