@@ -7,13 +7,26 @@
 2. **Security Features**: Supports IAM authentication, Lambda authorizers, and Amazon Cognito user pools. 🔒
    1. Integration with AWS WAF for protecting APIs against common web exploits&#x20;
 3. **Throttling and Rate Limiting**: Protects your backend services from being overwhelmed by too many requests. ⚡
+   1. API Caching is defiend per Stage ( dev, prod) and default 5 min (300s)
 4. **Monitoring and Metrics**: Integrated with Amazon CloudWatch, so you can view API calls, latency, and error rates. 📊
    1. **Canary** release deployments for safely rolling out changes
    2. Allows to version your APIs, which can be useful for managing different versions of Lambda functions
-   3. CloudTrail logging and monitoring of API usage and API changes&#x20;
+   3. CloudTrail logging and monitoring of API usage and API changes :exclamation: Must have proper IAM permission as if InvalidateCache policy is not imposed, **any client can invalidate cache on api**
+   4. **`IntegrationLatency`** metrics helps you analyze the timeout issues between your API Gateway and a Lambda function, always smaller than **`Latency`** metrics as it it is = API overhead + IntegrationLatency
+   5. **`CacheHitCount`** & **`CacheMissCount`** watch efficiency of the cache
 5. **Caching**: Enhances performance and reduces the load on your backend using caching at the API Gateway layer. 🌀
-6. **Flexible Integration Types**: Supports HTTP, HTTPS, and WebSocket protocols for real-time, two-way communication.
-   1. Can define custom domain names and SSL/TLS certificates, providing a branded API endpoint
+   1. Clients invalidate cache with Http Header `Cache-Control: max-age=0`
+6. **Flexible Integration Types**: Supports HTTP, HTTPS, and **WebSocket ( stateless)** protocols for real-time, two-way communication.
+   1. Can define custom domain names and SSL/TLS certificates via Route53 to provided unified URL for different clients plug-in to different API endpoints, i.e. providing a branded API endpoint
+      1. WebSocket API - same principal as with **wss:://**
+      2. **GW** uses routing tables so server/lambda knows where to route a specific "Action" `$request.body.action` if nothing is specified it will route to **default**
+      3.  `wss://[`**`someuniqueID`**`].execute-api.us1.amazonaws.com/dev/@c`**`onnections/connectionId`**
+
+          :white\_check\_mark: POST - sends msg from the server
+
+          :white\_check\_mark: GET - gets latest connection status on connectionID (ie Lambdas for onConnect, onDisconnect, onMessage ):white\_check\_mark: DELETE - disconnects connectId
+
+
 
 ## Best Practices for Using API Gateway
 
@@ -22,6 +35,121 @@
 3. Monitor API usage and performance using CloudWatch metrics.
 4. Implement canary releases for safe deployment of new versions.
 5. Use custom domain names for better branding and easier management.
+
+## Integration Types&#x20;
+
+### Proxies
+
+<figure><img src="../../.gitbook/assets/integration-types.png" alt=""><figcaption></figcaption></figure>
+
+**Mock Integration:**
+
+* Type: `MOCK`
+* Use case: Testing and development purposes
+* API Gateway returns a predefined response without sending a request to the backend
+
+**Lambda Proxy Integration** (`AWS_PROXY`):
+
+* Allows direct interaction between client and integrated Lambda function
+* API Gateway passes incoming request to Lambda function and Lambda function handles all request parsing.
+* Must configure integration req. and response
+* Lambda function handles input parsing and returns formatted output -> Lambda is responsible for returning the full HTTP response, including the `Content-Type` header and any body format (e.g., JSON, plain text, HTML, etc.) -> <mark style="background-color:red;">or will be response  error</mark>
+
+**HTTP Proxy Integration** (`HTTP_PROXY`):
+
+* Enables client access to backend HTTP endpoints with streamlined setup
+* API Gateway passes client request to HTTP endpoint and client response back to client
+* Possible to add custom Headers hidden to client i.e. API keys header, rate limiting, caching, auth Headers
+
+### Custom Integrations
+
+Lambda Custom Integration:
+
+* API Gateway intercepts the request and allows you to modify it using **mapping templates** before sending it to the Lambda function. Overhead -> maintain multiple templates for different clients.
+* Switching to a custom integration with lambda means that you now manage **request transformation**, **response transformation**, and potentially **error mapping**
+* API Gateway takes on the role of transforming requests. You might need to adjust your Lambda logic to rely on the mapped format.
+
+HTTP Custom Integration:
+
+* Use case: More complex setups with configurable mapping templates
+* Requires configuration of both integration request and response
+* Useful for complex HTTP integrations
+* use if VTL
+* `Content-Type: application/json or application/xml`
+
+#### Mapping Templates&#x20;
+
+* Mapping templates are expressed in Velocity Template Language (VTL) and applied to payloads using JSONPath.
+* Mapping templates add a slight latency to API Gateway processing. In high-throughput scenarios, this might be a factor to consider.
+
+**Used for:**
+
+1. Transforming data to match API-specified formats JSON to XML with SOAP (ie client server must receive XML payload, GW extracts data, builds SOAP message baased request ( maps data) call SOAP server and get XML response, then transform XML responsse to JSON like format)
+2. Overriding API request and response parameters and status codes
+3. Returning client-selected response headers
+4.  Modifying path parameters, query string parameters, or header parameters in method requests. Using API Gateway's mapping template we can adapt client requests to a backend service **without requiring clients to change their request format**
+
+    <mark style="background-color:yellow;">Advantages:</mark>
+
+    * **Decouple Frontend and Backend**: Clients can use intuitive query parameters without worrying about backend implementation.
+    * **Enable Compatibility**: Integrate with legacy systems that expect a different parameter structure.
+    * Your backend is a **legacy system** that accepts query string parameters with specific names.
+
+<details>
+
+<summary>Query string param modify with VTL</summary>
+
+I**nput**: When the client sends a request:
+
+```jsonp
+GET /search?title=aws&maxResults=10&sortBy=date
+```
+
+**Backend Requirement:**
+
+The backend expects the following query string parameters:
+
+* `q` instead of `title`
+* `limit` instead of `maxResults`
+* `order` instead of `sortBy`
+
+**Mapping Template Execution**:
+
+* Extracts `title`, `maxResults`, and `sortBy` from the query string.
+* Maps them to `q`, `limit`, and `order` in the backend format.
+
+
+
+In API Gateway, create a **mapping template** to modify the query string parameters.
+
+**Steps:**
+
+1. Go to your API Gateway resource and select the **Integration Request**.
+2. Enable **Mapping Templates** for the method (e.g., `GET`).
+3. Add a mapping template for the content type (e.g., `application/json`).
+
+**Example Velocity Template Language (VTL) Mapping Template:**
+
+```sql
+set($inputParams = $input.params().querystring)
+{
+    "q": "$inputParams.title",
+    "limit": "$inputParams.maxResults",
+    "order": "$inputParams.sortBy"
+}
+```
+
+**Backend Output**: Transformed request sent to the backend:
+
+```jsonp
+ GET /search?q=aws&limit=10&order=date
+```
+
+</details>
+
+
+
+
 
 ## Lambda Integration&#x20;
 
@@ -193,6 +321,42 @@ Will allow to test
 4. configure Canary
 
 <div><figure><img src="../../.gitbook/assets/canary-test.png" alt=""><figcaption></figcaption></figure> <figure><img src="../../.gitbook/assets/promote-canary.png" alt=""><figcaption></figcaption></figure></div>
+
+
+
+## Errors&#x20;
+
+## Security
+
+#### **Internal Authentication**&#x20;
+
+* IAM role + policy ( best for machine to machine)
+
+Internal + Cross Account + IP ranges + VPC endpoints
+
+* IAM policy + Resource based Policy
+
+#### External **Authentication**
+
+**CUP ( Cognito)**
+
+Client makes a trip to retrieve token from Cognito, which than talks to API GW for token evaluation, auto- expire tokens, easy integration
+
+**Lambda Authorizer -> 2 Types**&#x20;
+
+<mark style="background-color:yellow;">Token-Based Lambda Authorizer</mark>&#x20;
+
+All requests contain a Bearer token provided in the `Authorization` HTTP header. These tokens must be validated against a 3rd party provider
+
+<mark style="background-color:yellow;">Request-Parameter-Based Lambda Authorizer</mark>
+
+
+
+
+
+
+
+
 
 
 
