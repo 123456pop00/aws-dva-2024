@@ -43,3 +43,18 @@ When you create or update a CodeBuild project, you can specify the **location of
         "buildspec": "configs/my-custom-buildspec.yaml"
     }
     ```
+
+## CodeDeploy
+
+#### Configure Deployment Group
+
+<figure><img src="../.gitbook/assets/deploymentGroup(ec2).png" alt=""><figcaption></figcaption></figure>
+
+* Tag on the instance itself ( configure with CF tempalte)
+
+
+
+<div><figure><img src="../.gitbook/assets/deploymentSetting.png" alt=""><figcaption></figcaption></figure> <figure><img src="../.gitbook/assets/deploymentSetting-1.png" alt=""><figcaption></figcaption></figure></div>
+
+
+
