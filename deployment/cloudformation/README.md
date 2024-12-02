@@ -21,7 +21,7 @@ Service that models and helps set up resources, you create a template that **des
 
 ## Stack Templates
 
-When you use CloudFormation, you work with **templates** and **stacks**. CloudFormation uses these templates as blueprints for building your AWS resources.
+When you use CloudFormation, you work with **templates** and **stacks**. CloudFormation uses these templates as <mark style="background-color:yellow;">**blueprints**</mark> for building your AWS resources.
 
 **Stack Policy**&#x20;
 
@@ -144,7 +144,6 @@ Outputs:
 
 ```yaml
 #This stack creates a VPC and exports its ID for use by other stacks.
-
 Resources:
   MyVPC:
     Type: AWS::EC2::VPC
@@ -164,7 +163,6 @@ Consumer Stack
 
 ```yaml
 #This stack imports the VPC ID from NetworkStack and uses it to create a subnet.
-
 
 Parameters:
   SubnetCIDR:
@@ -462,6 +460,140 @@ Outputs:
 
 * YAML supports inline comments by using the `#` symbol.
 
+#### Intrinsic / Logical functions :heart\_eyes: :brain:
+
+```yaml
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  # Ref Example: Reference a parameter or resource
+  MyBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Ref BucketNameParam  # Retrieves the value of the parameter "BucketNameParam"
+
+  # Fn::GetAtt Example: Access an attribute of a resource
+  MyBucketArn:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Ref BucketNameParam
+  MyBucketArnOutput:
+    Value: !GetAtt MyBucket.Arn  # Retrieves the ARN attribute of the "MyBucket" resource
+
+  # Fn::FindInMap Example: Retrieve a value from a mapping
+  MyAMI:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]  # Retrieves the AMI ID based on region
+
+  # Fn::ImportValue Example: Import a value exported from another stack
+  ImportedBucketName:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !ImportValue MyExportedBucketName  # Imports an exported value from another stack
+
+  # Fn::Join Example: Join multiple strings with a delimiter
+  MyBucketName:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Join [ "-", ["MyApp", !Ref "AWS::Region", "Bucket"] ]  # Joins strings with "-" as delimiter
+
+  # Fn::Sub Example: Substitute variables within a string
+  MyBucketARN:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Sub "arn:aws:s3:::${BucketName}"  # Substitutes the value of the BucketName parameter
+
+  # Fn::ForEach Example: Iterate over a list (Note: ForEach isn't available in CloudFormation by default)
+  # This example uses Fn::ForEach in AWS SAM but can be similar in other services
+  MyLambdaFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      CodeUri: !Sub "s3://${CodeBucket}/${CodeKey}"
+      Handler: !ForEach [ "function1", "function2", "function3" ]  # Iterates over a list to deploy multiple functions
+
+  # Fn::ToJsonString Example: Convert an object to a JSON string
+  MyFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Environment:
+        Variables:
+          Config: !ToJsonString {"Key1": "Value1", "Key2": "Value2"}  # Converts a map into a JSON string
+
+  # Condition Functions Example: Fn::If, Fn::Not, Fn::Equals
+  MyConditionExample:
+    Type: "AWS::S3::Bucket"
+    Condition: IsProduction  # This condition will be defined elsewhere in the template
+  MyConditionOutput:
+    Value: !If [IsProduction, "Production Value", "Non-Production Value"]  # Conditional value based on "IsProduction"
+    
+  # Fn::Base64 Example: Encodes a string to Base64
+  MyEncodedValue:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        S3Bucket: !Ref MyBucket
+        S3Key: !Ref MyCodeKey
+      Environment:
+        Variables:
+          EncodedString: !Base64 "Hello World"  # Encodes the string "Hello World" into Base64
+
+  # Fn::Cidr Example: Generate CIDR block
+  MyCidrBlock:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !Cidr [ "10.0.0.0/16", 8, 4 ]  # Generates CIDR block for subnetting
+
+  # Fn::GetAZs Example: Retrieve Availability Zones for a region
+  AvailabilityZones:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      AvailabilityZones: !GetAZs ""  # Retrieves all availability zones for the region
+
+  # Fn::Select Example: Select an item from a list
+  MyVpc:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs "" ]  # Selects the first availability zone
+
+  # Fn::Split Example: Split a string into a list
+  MySplittedString:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        S3Bucket: !Ref MyBucket
+        S3Key: !Ref MyCodeKey
+      Environment:
+        Variables:
+          List: !Split [ ",", "value1,value2,value3" ]  # Splits the string into a list ["value1", "value2", "value3"]
+
+  # Fn::Transform Example: Use a macro or AWS-specific transform
+  MyTransformedTemplate:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${BucketName}/template.yaml"
+      Transform: "AWS::Include"  # Uses the AWS::Include transform to include a file from S3
+
+  # Fn::Length Example: Get the length of a string or list
+  MyListLength:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        S3Bucket: !Ref MyBucket
+        S3Key: !Ref MyCodeKey
+      Environment:
+        Variables:
+          ListLength: !Length [ "item1", "item2", "item3" ]  # Returns 3, the length of the list
+
+Conditions:
+  IsProduction:
+    Fn::Equals: [ !Ref "EnvironmentType", "production" ]
+
+```
+
+
+
+
+
 ## **Deletion Policies**
 
 A **DeletionPolicy** is a mechanism used to control what happens to a resource when a stack is deleted. By default, CloudFormation deletes the resources when a stack is deleted, but you can specify a **DeletionPolicy** to control this behavior.
@@ -474,6 +606,8 @@ A **DeletionPolicy** is a mechanism used to control what happens to a resource w
   The resource is not deleted when the stack is deleted. CloudFormation removes it from the stack's management, but it stays in your account.
 * **`Snapshot`** (for resources that support it, like RDS or EBS volumes):\
   A snapshot of the resource is taken before it is deleted. This is especially useful for preserving data like databases.
+
+
 
 #### Useful Links
 
