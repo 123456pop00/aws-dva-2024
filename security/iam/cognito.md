@@ -5,7 +5,9 @@ coverY: 0
 
 # Cognito
 
-> **Cognito** provides a high-level, easy-to-use service for user authentication and user data management
+> **Cognito User Pool** provides a high-level, easy-to-use service which handles **authentication** — it verifies the identity of a user (for example, by using username/password, social logins, or multi-factor authentication).
+
+## CUP (who you are :green\_heart:).
 
 #### 1. **Cognito User Pool** 🏊‍♂️
 
@@ -107,6 +109,77 @@ If you want **direct access to user data** and want to control the database and 
 
 
 ## Integrations
+
+
+
+## CIP (what you can do :raccoon: :octagonal\_sign:).
+
+> CUP- handles **authorization** — after a user has been authenticated (either through Cognito User Pools or another identity provider), it provides them with **temporary AWS credentials** (via AWS STS) to access specific AWS resources, based on the **IAM policies** attached to their identity.
+
+
+
+
+
+Summary Flow:
+
+#### **Cognito User Pool (CUP)** - Provides the actual **JWT token (ID token and access token)**.
+
+* The **CUP** (Cognito User Pool) is responsible for managing user authentication. When a user signs in (e.g., through Google, Facebook, or any other identity provider), the **CUP** issues a **JWT token** (specifically an ID token and an access token).
+
+#### 2. **Cognito Identity Pool (CIP)** - Validates the JWT and exchanges it for temporary credentials.
+
+* The **CIP**   takes the JWT token from the **CUP** (or any external identity provider) and validates it.
+* Once the **CIP** verifies the user's identity, it **exchanges** the JWT token for **temporary AWS credentials** via **AWS STS (Security Token Service)**.
+  * These temporary credentials can be used to access AWS resources, like S3, DynamoDB, etc.
+  * The credentials consist of an **Access Key ID**, **Secret Access Key**, and **Session Token**, all of which are short-lived.
+
+#### 3. **Accessing AWS Resources (e.g., S3)**:
+
+* With the temporary credentials provided by the **CIP**, the authenticated user can access specific resources, such as **S3 buckets**, based on the **IAM policy** attached to the **CIP roles**.
+  * In the IAM policy, you can use the `sub` (subject) from the **JWT token** in a `Condition` block to grant or deny access to specific resources.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::your-bucket-name/*",
+      "Condition": {
+        "StringEquals": {
+          "cognito-identity.amazonaws.com:sub": "${cognito-identity.amazonaws.com:sub}"
+        }
+      }
+    }
+  ]
+}
+
+```
+
+#### Prerequisites :heavy\_multiplication\_x: :
+
+1.  **Create IAM Role + Policy**:
+
+    * The IAM policy will specify what resources the authenticated user can access (e.g., S3, DynamoDB, etc.).
+    * You will likely use a variable like `cognito-identity.amazonaws.com:sub` (which is the unique identifier of the user in Cognito) in the policy to restrict access to user-specific resources.
+
+
+2. **Create CIP**&#x20;
+
+* The **CIP** will be used to authenticate the users via the **CUP** (User Pool) or any external identity provider (e.g., Google).
+* After the user is authenticated, the **CIP** will issue temporary AWS credentials using **STS** for accessing AWS resources (e.g., S3).
+
+3.  #### **Attach the Role to the Identity Pool**:
+
+    * <mark style="background-color:yellow;">In your</mark> <mark style="background-color:yellow;"></mark><mark style="background-color:yellow;">**CIP**</mark><mark style="background-color:yellow;">, you will specify the IAM role that authenticated users will assume.</mark> This is where you attach the IAM role that has the policy to access specific resources like S3.
+    * The role should be attached under the **authenticated role** in your **CIP** configuration.
+
+
+
+
+
+
 
 <details>
 

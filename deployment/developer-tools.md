@@ -2,6 +2,10 @@
 
 ## Codepipeline
 
+> AWS CodePipeline is a fully managed continuous delivery (CD) service that helps you automate your release pipeline for fast and reliable application and infrastructure updates. It automates the build, test, and deploy phases of your release process every time there is a code change.
+
+
+
 <div align="left"><figure><img src="../.gitbook/assets/codepipelineDeployFromGitRepo.png" alt="" width="375"><figcaption></figcaption></figure></div>
 
 ### Pipeline customisation
@@ -46,6 +50,10 @@ When you create or update a CodeBuild project, you can specify the **location of
 
 ## CodeDeploy
 
+> CodeBuild is a fully managed continuous integration (CI) service that compiles source code, runs tests, and produces software packages that are ready to deploy. It is an alternative to Jenkins.
+
+
+
 #### Configure Deployment Group
 
 <figure><img src="../.gitbook/assets/deploymentGroup(ec2).png" alt=""><figcaption></figcaption></figure>
@@ -55,6 +63,12 @@ When you create or update a CodeBuild project, you can specify the **location of
 
 
 <div><figure><img src="../.gitbook/assets/deploymentSetting.png" alt=""><figcaption></figcaption></figure> <figure><img src="../.gitbook/assets/deploymentSetting-1.png" alt=""><figcaption></figcaption></figure></div>
+
+## CodeDeply
+
+> AWS CodeDeploy is a fully managed deployment service that automates software deployments to a variety of computing services such as EC2, Fargate, Lambda, and your on-premises servers. You can define the strategy you want to execute such as in-place or blue/green deployments.
+
+
 
 
 
