@@ -17,9 +17,6 @@ icon: lock-keyhole
 :exclamation: **Resource-based:** policies attached directly to resource policies like S3 bucket or Lambda function, AWSServiceRoleForAWSCloud9. They define **Trust Entities that can assume the role.**
 
 * **Trust Policies**: This is a specific type of resource-based policy that is attached to an IAM role. It defines the **trust relationships** and specifies which identities (users, services, or accounts) are allowed to assume the role.
-
-
-
 * **IAM Credentials report:** lists all account's users and the status of their credentials. Account level report.
 * **IAM Access Advisor:** breaks down the permissions granted to a user, role, or group and when those services were last accessed. User level report that shows the **"Last Accessed"** time for each service, indicating when that service was last used by the entity.
 * IAM Access Analyser:&#x20;
@@ -32,6 +29,41 @@ icon: lock-keyhole
     <figure><img src="../../.gitbook/assets/image (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 <figure><img src="../../.gitbook/assets/IAM.png" alt=""><figcaption></figcaption></figure>
+
+## Policy Types
+
+* **WS Managed Policy** = Simple, broad, AWS-handled 😇
+* **Customer Managed Policy** = Flexible, reusable, version-controlled 🔧
+* **Inline Policy** = Specific, one-to-one, tightly bound 2KB 🔒
+
+***
+
+**1. AWS Managed Policy 📦🔧**
+
+* **Maintained by AWS**: AWS keeps these up to date, adding new APIs and features as they are released.
+* **Predefined, general-purpose permissions**: Great for common tasks like `AdministratorAccess`, `PowerUserAccess`, or `ReadOnlyAccess`.
+* **Automatically updated**: Whenever AWS adds new functionality, these policies are updated automatically without any action from you.
+* **No version control**: You can’t roll back to a previous version since AWS is responsible for updates.
+
+📝 _Use case_: These are great for quick, broad permissions (e.g., administrators) where you don’t need granular control but still want reliable, managed permissions. ⚡
+
+**2. Customer Managed Policy 🛠️👥**
+
+* **Created and managed by the customer**: You define the permissions exactly how you need.
+* **Reusable**: You can apply it to multiple IAM entities (users, groups, or roles) across accounts.
+* **Version controlled & rollback**: Keep track of policy changes and roll back to previous versions if needed. Useful for maintaining and auditing access over time.
+* **More flexible**: Unlike AWS Managed Policies, you can add, remove, or modify permissions as you see fit.
+
+🎉 _Use case_: When you need fine-grained, customizable access control for your specific use case. Best when managing permissions at scale across multiple users and roles. 🌍
+
+**3. Inline Policy 📝🔒**
+
+* **Strict 1-to-1 relationship**: Inline policies are attached directly to an IAM principal (user, group, or role) and can’t be reused across others.
+* **No versioning**: Once created, you cannot keep track of changes, and you can’t roll back to previous versions. Once it's deleted, it's gone forever.
+* **Max size of 2 KB**: These are ideal for simpler, smaller permission sets due to size constraints.
+* **Policy is deleted if the IAM principal is deleted**: The inline policy is permanently tied to the user or role it’s attached to. _If the principal is deleted, the inline policy goes with it._
+
+🛠️ _Use case_: Great for specific, tightly scoped permissions that are tied to a single pricipal. Think of it like a **personal** permission set — _one user, one policy_. 🤖
 
 ## IAM Policies ( Group, Inline)
 
@@ -67,6 +99,8 @@ graph LR
 ### Achieving Fine Grained Access / Layered security
 
 When evaluating if a principal can perform an action IAM policies will be evaluated in combination with S3 bucket policies attached to resource. Such as evaluate both IAM and bucket policies.
+
+:x: For anythis the principle of <mark style="background-color:red;">**explicit deny overriding allow**</mark><mark style="background-color:red;">.</mark>
 
 1. &#x20;IAM policy for Devs group can grant explicit "Allow" access to the S3 bucket action (`"Action": "s3:GetObject"`for all objects, but Bucket policy (_also a JSON documents specifies permissions at the bucket level_) can enforce additional restrictions on specific objects / certain documents with explicit "Deny" = <mark style="color:red;">**DENY**</mark>
 
@@ -239,33 +273,158 @@ EC2 instances will be denied permission to upload objects, regardless of other I
 
 </details>
 
-### Dynamic IAM Policy
+### Dynamic IAM Policy -> leverage ${aws: variable}
 
-Dynamic policies evaluate conditions in real-time when an API request is made. For instance, they can include conditions based on the requester's attributes, the resource's attributes, the time of the request.
+* Dynamic policies evaluate conditions in real-time when an API request is made.&#x20;
+* AWS variables are resolved when policy is evaluated.
+* Dynamic policies can include conditions based on the requester's attributes, the resource's attributes, the time of the request.
 
-For example, IAM policy that allows a **user** to perform actions on their own home directory, you can use <mark style="color:red;">policy variables.</mark> They're resolved when policy is evaluated.
+<details>
 
-**How it works? -> Dynamic Resolution with standard policy variables**
+<summary>Common Dynamic Variables summary </summary>
+
+#### 1. **`aws:username`**
+
+* Represents the IAM username of the requester.
+* **Example use**: Restrict access to resources specific to the user.
+
+#### 2. **`aws:userid`**
+
+* Represents the unique identifier for the IAM user or role.
+* **Example use**: Can be used for fine-grained access control based on the user’s unique ID.
+
+#### 3. **`aws:requester`**
+
+* Represents the account ID or ARN of the requester.
+* **Example use**: Restrict actions based on the account making the request.
+
+#### 4. **`aws:PrincipalTag`**
+
+* Represents the tags attached to the IAM principal (user or role).
+* **Example use**: Implement access controls based on IAM tags like `Role` or `Environment`.
+
+#### 5. **`aws:currentTime`**
+
+* Represents the current UTC time.
+* **Example use**: Restrict access to certain resources during specific times of day or specific dates.
+
+#### 6. **`aws:MultiFactorAuthPresent`**
+
+* Indicates whether MFA (Multi-Factor Authentication) is enabled for the requester.
+* **Example use**: Require MFA for sensitive actions (e.g., deleting resources).
+
+#### 7. **`aws:requestTag`**
+
+* Represents tags attached to the request (e.g., EC2 instance tags).
+* **Example use**: Grant access to resources based on resource tags, like `Environment` or `Department`.
+
+#### 8. **`aws:SourceIp`**
+
+* Represents the IP address from which the request is made.
+* **Example use**: Restrict access based on IP address (e.g., allowing access from specific ranges or locations).
+
+#### 9. **`aws:TokenIssueTime`**
+
+* Represents the time when temporary credentials (session tokens) were issued.
+* **Example use**: Restrict access based on the age of temporary credentials.
+
+#### 10. **`aws:PrincipalOrgID`**
+
+* Represents the AWS Organization ID of the principal making the request.
+* **Example use**: Grant access to resources only to principals within a specific AWS Organization.
+
+#### 11. **`aws:ExternalId`**
+
+* Used to provide an external ID in cross-account scenarios.
+* **Example use**: Verify that a third party assuming a role uses the correct external ID.
+
+#### 12. **`aws:UserAgent`**
+
+* Represents the user-agent string of the requester.
+* **Example use**: Restrict access based on the type of client or tool used for the request.
+
+#### 13. **`aws:RequestId`**
+
+* Represents the unique identifier of the request.
+* **Example use**: Logging and tracking request-specific data.
+
+#### 14. **`aws:SecureTransport`**
+
+* Indicates whether the request was made over a secure channel (HTTPS).
+* **Example use**: Require HTTPS for certain actions to ensure encrypted communication.
+
+#### 15. **`aws:PrincipalServiceName`**
+
+* Represents the name of the AWS service that made the request.
+* **Example use**: Restrict actions based on the AWS service making the request.
+
+#### 16. **`aws:RoleSessionName`**
+
+* Represents the session name used when assuming a role.
+* **Example use**: Grant or deny access based on role session names.
+
+#### 17. **`aws:Region`**
+
+* Represents the AWS region in which the request is made.
+* **Example use**: Restrict access to resources based on region.
+
+#### 18. **`aws:RequestTime`**
+
+* Represents the timestamp of when the request was made.
+* **Example use**: Apply conditions based on the time of the request.
+
+#### 19. **`aws:PrincipalType`**
+
+* Represents the type of principal making the request (e.g., `IAMUser`, `AssumedRole`, etc.).
+* **Example use**: Implement role-based access control based on principal type.
+
+#### 20. **`aws:VersionId`**
+
+* Represents the version ID of an object (e.g., in S3).
+* **Example use**: Restrict actions on specific versions of resources.
+
+#### 21. **`aws:SourceVpce`**
+
+* Represents the VPC endpoint ID from which the request was made.
+* **Example use**: Restrict access to VPC endpoints for internal use.
+
+#### 22. **`aws:VpcId`**
+
+* Represents the VPC ID from which the request was made.
+* **Example use**: Restrict access to certain resources to specific VPCs.
+
+</details>
+
+
+
+For example, IAM policy that allows a **user** to perform actions on their own bucket directory, you can use <mark style="color:red;">policy variables.</mark> **How it works? -> Dynamic Resolution with standard policy variables**
 
 * Attach to all users, instead of impractically create individual policies
 
-**Enable Users to Access their Home Directory in S3 ->** When an IAM user (like `alice`) makes a request to /home, AWS automatically substitutes `${aws:username}` with `alice`. This means the user will only have access to the resources in `arn:aws:s3:::home/alice/*`.
+**Policy Example**:
 
-```
-//user permissions to perform any S3 action on their own home dir 
+1. No hardcoding of usernames. **`Resource: "arn:aws:s3:::example-bucket/${aws:username}/*"`**: This restricts the access to only the objects stored under the specified S3 bucket, and dynamically substitutes `${aws:username}` for the IAM user's username. For example, if the user’s IAM username is `john_doe`, the effective resource ARN will be `arn:aws:s3:::example-bucket/john_doe/*`,
+2. The policy <mark style="color:green;">**allows**</mark> you to access objects in the S3 bucket, but **only from a specific IP range**, like `192.168.1.0/24` (which represents your office's network).&#x20;
+   1. **`aws:SourceIp: "192.168.1.0/24"`**: This means that only requests from the IP address range `192.168.1.0/24` will be allowed to perform the `s3:GetObject` action. Any request from outside this range will be denied.
 
+```jsonp
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-  
-     "Sid": "StmtAllowAllS3InHomeDir",
       "Effect": "Allow",
-      "Action": "s3:*", // any action
-      "Resource": "arn:aws:s3:::home/${aws:username}/*"
+      "Action": "s3:*",
+      "Resource": "arn:aws:s3:::workstuff-bucket/julia-23w4e/*",
+      "Condition": {
+        "IpAddress": {
+          "aws:SourceIp": "192.168.1.0/24" //outside the allowed range no access 
+          // even though you're logged in as julia-23w4e
+        }
+      }
     }
   ]
 }
+
 ```
 
 **Enable Users to Manage their Credentials ->** The following policy permits any IAM user to perform any of the key and certificate related actions on their own credentials.

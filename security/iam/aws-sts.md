@@ -169,11 +169,7 @@ unset AWS_ACCESS_KEY_ID AWS_SESSION....
 
 </details>
 
-<div align="left" data-full-width="true">
-
-<figure><img src="../../.gitbook/assets/image (4).png" alt="sts-iam-user-assumerole"><figcaption></figcaption></figure>
-
-</div>
+<div align="left" data-full-width="true"><figure><img src="../../.gitbook/assets/image (4).png" alt="sts-iam-user-assumerole"><figcaption></figcaption></figure></div>
 
 **AssumeRoleWithSAML:** returns short-term credentials for a role authenticated with SAML. This is **useful** when you have a company that uses an **external identity provider (IdP)**, like Microsoft AD, Okta, or another SAML-based service, so instead of creating individual AWS IAM users for each person, you can set up **federated access.**
 
@@ -218,7 +214,9 @@ And an AWS-managed policy **WSCloud9ServiceRolePolicy,** that grants the necessa
 
 _As an **IAM user** or **IAM role** creating a Cloud9 environment, you need the `iam:PassRole` permission to allow Cloud9 to assume the `AWSServiceRoleForAWSCloud9` role on your behalf._
 
+[_https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-reference-policy-checks.html#access-analyzer-reference-policy-checks-security-warning-pass-role-with-star-in-resource_](https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-reference-policy-checks.html#access-analyzer-reference-policy-checks-security-warning-pass-role-with-star-in-resource)
 
+![](../../.gitbook/assets/passRole-security.png)
 
 </details>
 
@@ -276,6 +274,6 @@ AWS_SESSION_TOKEN=your-session-token
 
 [https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-options.html](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-options.html)
 
-[https://docs.aws.amazon.com/IAM/latest/UserGuide/id\_roles\_providers\_saml\_3rd-party.html?icmpid=docs\_iam\_help\_panel\_create](https://docs.aws.amazon.com/IAM/latest/UserGuide/id\_roles\_providers\_saml\_3rd-party.html?icmpid=docs\_iam\_help\_panel\_create)
+[https://docs.aws.amazon.com/IAM/latest/UserGuide/id\_roles\_providers\_saml\_3rd-party.html?icmpid=docs\_iam\_help\_panel\_create](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_saml_3rd-party.html?icmpid=docs_iam_help_panel_create)
 
-[https://docs.aws.amazon.com/STS/latest/APIReference/API\_Operations.html](https://docs.aws.amazon.com/STS/latest/APIReference/API\_Operations.html)
+[https://docs.aws.amazon.com/STS/latest/APIReference/API\_Operations.html](https://docs.aws.amazon.com/STS/latest/APIReference/API_Operations.html)
