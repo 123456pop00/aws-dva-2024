@@ -20,9 +20,18 @@
 
 ## CodeBuild
 
+> CodeBuild is a fully managed continuous integration (CI) service that compiles source code, runs tests, and produces software packages that are ready to deploy. It is an alternative to Jenkins.
+>
+>
+
+
+
+* CodeBuild can run any commands, so you can use it to run commands including build a static website and copy your static web files to an S3 bucket.
+* You can configure CodeBuild to run its build containers in a VPC, so they can access private resources in a VPC such as databases, internal load balancers, ..
+
 **Default Behavior**:
 
-* If no buildspec file is specified, CodeBuild looks for <mark style="color:red;">**`buildspec.yml`**</mark> in the root directory of the repository.
+* If no **buildspec** file is specified, CodeBuild looks for <mark style="color:red;">**`buildspec.yml`**</mark> in the **root** directory of the repository.
 
 **Specifying the Custom Buildspec**
 
@@ -47,10 +56,19 @@ When you create or update a CodeBuild project, you can specify the **location of
         "buildspec": "configs/my-custom-buildspec.yaml"
     }
     ```
+* CodeBuild containers are deleted at the end of their execution (success or failure). You can't SSH into them, even while they're running.
 
-## CodeDeploy
+<figure><img src="../.gitbook/assets/codeBuildLog.png" alt=""><figcaption></figcaption></figure>
 
-> CodeBuild is a fully managed continuous integration (CI) service that compiles source code, runs tests, and produces software packages that are ready to deploy. It is an alternative to Jenkins.
+
+
+## CodeDeply
+
+> AWS CodeDeploy is a fully managed deployment service that automates software deployments to a variety of computing services such as EC2, Fargate, Lambda, and your on-premises servers. You can define the strategy you want to execute such as in-place or blue/green deployments.
+>
+>
+
+
 
 
 
@@ -63,10 +81,6 @@ When you create or update a CodeBuild project, you can specify the **location of
 
 
 <div><figure><img src="../.gitbook/assets/deploymentSetting.png" alt=""><figcaption></figcaption></figure> <figure><img src="../.gitbook/assets/deploymentSetting-1.png" alt=""><figcaption></figcaption></figure></div>
-
-## CodeDeply
-
-> AWS CodeDeploy is a fully managed deployment service that automates software deployments to a variety of computing services such as EC2, Fargate, Lambda, and your on-premises servers. You can define the strategy you want to execute such as in-place or blue/green deployments.
 
 
 
