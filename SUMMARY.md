@@ -35,6 +35,7 @@
 
 ## Security
 
+* [System Manager](security/system-manager.md)
 * [IAM](security/iam/README.md)
   * [AWS STS](security/iam/aws-sts.md)
   * [Cognito](security/iam/cognito.md)

@@ -14,7 +14,14 @@ icon: binary-circle-check
 
 * Limit for KMS Api call is 4 KB -> larger use Envelope Encryption
 * Envelope encryption uses DEK
-* **S3 Bucket Key** is used in conjunction with **SSE-KMS** to reduce the overhead of using KMS for encryption to&#x20;
+* **S3 Bucket Key** is used in conjunction with **SSE-KMS** to reduce the overhead of using KMS for encryption of every sing object we put in a bucket, in order to improve performance by reducing the number of **AWS KMS API calls** needed when encrypting objects.&#x20;
+  * When you store an object in an S3 bucket, which beed configures with SSE-KMS, S3 bucket key is created automatically. The **S3 Bucket Key** uses only **one KMS call** is made to encrypt the **Bucket Key** itself. So instead of calling KMS each time, S3 uses the **S3 Bucket Key** to encrypt the object. We make API call for every **PUT** request. The **S3 Bucket Key** itself is encrypted with the KMS key and stored in S3, reducing the need for KMS calls for every object.
+  * **Without S3 Bucket Key**: Every time you upload an object, S3 encrypts the object and calls the KMS service to encrypt the object’s key.
+  * **S3 Bucket Key** is stored in S3 as metadata for that object.
+  * While the **S3 Bucket Key** is shared for objects within the same bucket, it is still encrypted with the **CMK**, so the risk is mitigated by the fact that your **CMK**'s permissions are tightly controlled.
+  *   :exclamation:if we disable Bucket key with SSE-KMS encryption selected every upload will be an api call to KMS ( when we don't want a shared **Bucket Key** and want each object to be encrypted individually with **KMS**.
+
+
 
 ### AWS managed keys - free - _aws/service_
 
