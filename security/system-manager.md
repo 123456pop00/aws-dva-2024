@@ -4,7 +4,7 @@ icon: user-secret
 
 # System Manager
 
-## Application Tools -> PArameter Store
+## Application Tools -> Parameter Store
 
 ## Lambda +  SSM Client instance
 
