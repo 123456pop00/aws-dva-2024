@@ -10,6 +10,7 @@ coverY: 0
 ## Features
 
 * AWS Elastic Beanstalk supports Java, .NET, PHP, Node.js, Python, Ruby, Go, and Docker
+* It AWS CloudFormation to launch the resources in your environment and propagate configuration changes
 * Can deploy web or worker
   * **Web Applications**:
     *   **Single-instance environment**: Great for dev/testing or low-traffic apps.
@@ -38,6 +39,7 @@ coverY: 0
   * All files have `.config` extension and should be in <mark style="background-color:orange;">YAML(preferred)</mark> or JSON format
 * &#x20;`.ebextensions` directory allows you to manage environment settings that **cannot be configured through the Elastic Beanstalk console** like RDS (Relational Database Service), Elasticache, and DynamoDB can also be specified within these extensions.
 * **Environment configurations** like VPC, RDS, and load balancers are specific to the account and region
+  * RDS can be created inside (dev env) and outside the EB env ( prod)
 * Manual migration for cross-account -> EB doesn't have direct export/import
 *   Manual migration for LB, **we can't to directly change the load balancer type** from the console.&#x20;
 
@@ -49,8 +51,30 @@ coverY: 0
 
 
 
+*   When you **clone an environment:**
 
-## Deployment&#x20;
+    * ✅ **Resources are replicated**: Elastic Beanstalk will create a copy of all resources associated with the original environment, such as:
+      * EC2 instances
+      * ALB or ELB
+      * Auto Scaling Group
+      * Security Groups
+      * Configuration settings
+    * ✅ **RDS instance is cloned**, but...
+      * ⚠️ **RDS data is not copied**: The new RDS instance starts with a clean slate. If you need the same data, you must manually back it up and restore it to the cloned instance.
+    * :exclamation:Does **not copy application data** or any configuration outside of **that** environment.
+
+
+* Cloning can also be a good starting point for **Blue/Green deployments for isolated features**
+* Via **CLI BS** supports `--option-settings` to specify the **custom AMI ID** (`ami-0123456789abcdef0`)
+  * **Custom AMI Compatibility**: The AMI you use should be compatible with the selected platform (e.g., Amazon Linux 2, Node.js, etc.).
+  * **Elastic Beanstalk Managed Updates**: Once you use a custom AMI, Beanstalk no longer manages updates or patches to the AMI, so you need to manage it yourself.
+  *   **Scaling Configuration**: If you’re using a custom AMI, ensure that the AMI has the right configurations for scaling and management (e.g., proper permissions, roles, etc.).
+
+
+
+
+
+## Deployment Strategies&#x20;
 
 {% tabs %}
 {% tab title="All At Once" %}
@@ -83,7 +107,9 @@ option_settings:
 
 ```
 
+If a deployment fails after one or more batches completed successfully, the completed batches run the new version of your application while any pending batches continue to run the old version. You can identify the version running on the instances in your environment on the health page in the console.
 
+* If you **terminate instances from the failed deployment,** Elastic Beanstalk replaces them with instances running the application version from the **most recent successful deployment.**
 {% endtab %}
 
 {% tab title="Rolling + Additional Batches" %}
@@ -134,17 +160,24 @@ option_settings:
 {% endtab %}
 
 {% tab title="Blue/Green" %}
-
+_Not direct feature of EB_
 
 * You have two environments: **Blue** (current version) and **Green** (new version).
 * The **Blue** environment serves live traffic, while you deploy the **Green** environment with the new version.
-* After the **Green** environment is fully deployed and tested, you switch traffic to **Green** by updating the DNS (CNAME swap).
-* Once traffic is shifted to **Green**, the **Blue** environment can be deleted or kept as a backup.
+* After the **Green** environment is fully deployed and tested, you switch traffic to **Green** by updating the DNS (CNAME swap). The traffic switch happens **all at once** after the green environment is validated
+* Once traffic is shifted to **Green**, the **Blue** environment can be deleted or kept as a **backup**.
 * DNS change happens at the ALB level
 * DB must be outside the EB env because when the env is terminated we lose al resources
 {% endtab %}
 {% endtabs %}
 
+*   Some policies replace all instances during the deployment or update. This causes all accumulated Amazon EC2 burst balances to be lost. It happens in the following cases:
+
+    1. Managed platform updates with instance replacement enabled
+    2. Immutable updates
+    3. Deployments with immutable updates or traffic splitting enabled
+
+    \
 
 
 
@@ -159,13 +192,11 @@ option_settings:
 
 `aws elasticbeanstalk describe-environments --query "Environments[?Status!='Terminated']"`
 
-*
 
 
 
 
-
-#### Deploying with CodePipeline&#x20;
+### Deploying with CodePipeline&#x20;
 
 On set up create [AWSCodePipelineServiceRole-eu-north](https://us-east-1.console.aws.amazon.com/iam/home?region=eu-north-1#/policies/details/arn%3Aaws%3Aiam%3A%3A060683702247%3Apolicy%2Fservice-role%2FAWSCodePipelineServiceRole-eu-north-1-myFirstPipeline)-mypipeline service Role and ensure it has the&#x20;
 
