@@ -2,14 +2,14 @@
 
 
 
-* **ECS cluster** with the EC2 launch type is a logical grouping of EC2 instances (container instances) that ECS can use to run tasks and services.
-* **Service** (Service ≠ Container ) :cook: manages **tasks**. It ensures that a specific number of tasks (containers) are always running. For example:
-  * If you specify 3 tasks in a service, ECS ensures 3 containers are running.
+* **ECS cluster** with the EC2 launch type is a logical grouping of EC2 instances (1-10 container instances) that ECS can use to run tasks and services.
+* **Service** (Service ≠ Container ) :cook: is an **orchestration** mechanism that manages group of identical **tasks**. It ensures that a specific number of  **tasks** (which contain your containers) are always running.&#x20;
+  * If you specify 3 tasks in a service, ECS ensures 3 containers are running, it keeps track of task failures, and automatically replaces them as needed to maintain the desired number of running tasks.
   * If one task crashes, ECS will automatically restart it.
 * **EC2 IAM Role**: One role for all EC2 instances in your cluster (manages ECS Agent).
-* **ECS Task Roles**: Defined per task definition, provides fine-grained permissions to the containers in that task.
-* **Task Definition** blueprint that defines the container :receipt::cook:
-*   **Task** is the actual running container :cookie:
+* **ECS Task Roles**: Defined <mark style="background-color:red;">per task definition,</mark> provides fine-grained permissions to the containers in that task.
+* **Task Definition** blueprint that defines the container :receipt::cook: it describes the task requirements (CPU, Memory, container images, networking type, IAM, etc.)
+*   **Task** is the actual unit that is running container :cookie: (or set of containers) based on the task definition. A single task definition can define **up to ten (10) containers**. This allows you to group multiple containers that work together as part of a single application or service
 
 
 
@@ -135,7 +135,28 @@ When task is started ECS must know on which EC2 instance to place it.
 {% tab title="Fargate Launch Type - Serverless" %}
 * Fargate + EFS = ultimate serveless combination
 * **No EC2 instances to manage,** Fargate will scale according to your ASG policies **but will not upgrade instance type -** it will scale **horizontally**&#x20;
-* We only create ECS Task, based on CPU, RAM we need, **no EC2 instances will be created in our account**
+* We only create ECS Task, based on CPU, memory (RAM) we need, **no EC2 instances will be created in our account**
+* We treat each Task <mark style="background-color:red;">in fargate as a</mark> <mark style="background-color:red;"></mark><mark style="background-color:red;">**self-contained unit**</mark> <mark style="background-color:red;"></mark><mark style="background-color:red;">in terms of networking, much like an individual EC2 instance</mark>. As each task gets its own **ENI** with a private IP address (and optionally a public IP if configured) in specified VPC (inside Task definition -> ). We control access to the task using SGs, it is applied at the **ENI level**, which means it controls traffic directly for the task.
+
+```jsonp
+"networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": [
+        "subnet-12345678",  // VPC subnet ID (e.g., private subnet)
+        "subnet-87654321"   // Optional second subnet (if running across multiple subnets)
+      ],
+       "securityGroups": [
+        "sg-12345678"  // Security group ID
+      ],
+      "assignPublicIp": "ENABLED"  // Optional: Whether to assign a public IP for internet access
+    }
+  }
+}
+
+```
+
+
+
 *   You don’t manage EC2 instances or ASGs. AWS fully abstracts and provisions the underlying compute resources required for your ECS tasks.
 
     * EC2 instances that Fargate uses are not visible in the **EC2 console**.
@@ -231,10 +252,154 @@ If your ECS task runs a **single container**, then the **Dockerfile** is equival
    * **CPU and Memory**:
      * For **Fargate**, you define task-level CPU and memory requirements.
      * For **EC2**, containers can share resources from the host.
+   * **Container-Level Memory (Optional)**:
+     * Each container in the task can have:
+       * A **hard limit** (`memory`): The maximum amount of memory the container can use.
+       * A **soft limit** (`memoryReservation`): The minimum amount of memory reserved for the container.
+     * **Task-Level Memory (Required in Fargate)**:
+       * For Fargate, the task-level memory must be explicitly set and must align with the CPU-to-memory ratios.
 4. **Compatibility**:
    * Specifies whether the task works with **Fargate**, **EC2**, or both.
 5. **Versioning**:
    * Each update creates a new **revision** to manage changes easily.
+
+### Sample Task&#x20;
+
+**Network Mode**: `awsvpc` is required for Fargate, allowing each task its own elastic network interface.
+
+#### **How Dynamic Port Mapping Works in ECS with EC2 Launch Type**
+
+1. **Shared ENI for Tasks**:
+   * All tasks running on an EC2 instance share the **ENI (Elastic Network Interface)** of that instance.
+   * This means all tasks share the same IP address (the EC2 instance’s IP).
+2. **Dynamic Port Assignment**:
+   * Each container within a task requires a **unique host port** to avoid conflicts.
+   * Instead of manually assigning specific ports for each container, ECS dynamically assigns an available port from a predefined range (usually `32768–61000`).
+3. **Mapping Between Host and Container Ports**:
+   * The container in your task has an **internal container port** (e.g., port `80` for a web app).
+   * ECS maps this internal container port to an **available host port** on the EC2 instance (e.g., port `32769`).
+   * Th<mark style="background-color:red;">e dynamic mapping ensures multiple tasks can run on the same EC2 instance without port conflicts.</mark>
+4. **Routing Traffic**:
+   * When a request comes to the EC2 instance's public IP address and a specific host port (e.g., `:32769`), ECS routes it to the corresponding container port (e.g., port `80`) inside the container.
+
+<table><thead><tr><th width="191">Feature</th><th>EC2 Dynamic Port Mapping</th><th>Fargate with ENI</th></tr></thead><tbody><tr><td><strong>IP Address</strong></td><td>Shared (tasks share the EC2's IP)</td><td>Each task gets its own IP (unique)</td></tr><tr><td><strong>Port Usage</strong></td><td>Dynamic host port mapping, Port mapping is used to expose container ports to the host (e.g., <code>8080:80</code> maps container port <code>80</code> to host port <code>8080</code>).</td><td>Each task has unique private IP. Look for ENIs with descriptions like <code>ECS task: &#x3C;task-id></code>. These correspond to your Fargate tasks.</td></tr><tr><td><strong>Security Groups</strong></td><td>Shared at the EC2 level</td><td>Dedicated per task</td></tr><tr><td><strong>Isolation</strong></td><td>Tasks are less isolated</td><td>Full network-level isolation</td></tr><tr><td><strong>Management</strong></td><td>Requires managing EC2 instances</td><td>Fully managed by AWS (serverless)</td></tr></tbody></table>
+
+```jsonp
+{
+  "family": "example-task-definition", // Name of the task definition family (logical group of versions)
+  "taskRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole", // IAM role used by the task to access AWS resources
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole", // IAM role for pulling container images and logging
+  "networkMode": "awsvpc", // Networking mode for the task (required for Fargate)
+  "containerDefinitions": [ // List of containers in the task
+    {
+      "name": "app-container", // Name of the container
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:latest", // Docker image to use
+      "cpu": 256, // CPU units for this container (relative to task CPU)
+      "memory": 512, // Hard memory limit in MiB
+      "memoryReservation": 256, // Soft memory reservation in MiB
+      "essential": true, // Marks this container as essential; the task fails if this container stops
+      "portMappings": [ // Port mappings for container-to-host communication
+        {
+          "containerPort": 80, // Port exposed on the container
+          "hostPort": 80, // Port exposed on the host (EC2) or ENI (Fargate)
+          "protocol": "tcp" // Protocol used (TCP or UDP)
+        }
+      ],
+      "environment": [ // Environment variables passed to the container
+        {
+          "name": "ENV_VAR_NAME",
+          "value": "value"
+        }
+      ],
+      "secrets": [ // Secrets passed to the container from AWS Secrets Manager or Parameter Store
+        {
+          "name": "SECRET_NAME",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret"
+        }
+      ],
+      "logConfiguration": { // Logging configuration for the container
+        "logDriver": "awslogs", // Log driver (e.g., awslogs for CloudWatch)
+        "options": {
+          "awslogs-group": "/ecs/example-task", // CloudWatch log group name
+          "awslogs-region": "us-east-1", // AWS region for CloudWatch logs
+          "awslogs-stream-prefix": "app" // Prefix for log stream names
+        }
+      },
+      "mountPoints": [ // Data volumes mounted to the container
+        {
+          "sourceVolume": "my-volume", // Name of the volume
+          "containerPath": "/data", // Path inside the container where the volume is mounted
+          "readOnly": false // Whether the volume is read-only
+        }
+      ],
+      "volumesFrom": [ // Volumes shared with other containers
+        {
+          "sourceContainer": "another-container",
+          "readOnly": true
+        }
+      ]
+    }
+  ],
+  "volumes": [ // Volumes available to the task
+    {
+      "name": "my-volume", // Logical name of the volume
+      "host": { // Host volume (for EC2 instances only)
+        "sourcePath": "/path/on/host"
+      }
+    },
+    {
+      "name": "efs-volume", // EFS volume (shared storage across tasks)
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-12345678", // EFS filesystem ID
+        "rootDirectory": "/", // Root directory within the filesystem
+        "transitEncryption": "ENABLED" // Whether to use transit encryption
+      }
+    }
+  ],
+  "placementConstraints": [ // Constraints for task placement
+    {
+      "type": "memberOf",
+      "expression": "attribute:ecs.instance-type =~ t2.*" // Example: Restrict tasks to specific instance types
+    }
+  ],
+  "requiresCompatibilities": [ // Launch types supported by this task
+    "EC2",
+    "FARGATE"
+  ],
+  "cpu": "512", // Task-level CPU allocation (required for Fargate)
+  "memory": "1024", // Task-level memory allocation (required for Fargate)
+  "runtimePlatform": { // Specify OS and architecture (useful for multi-architecture tasks)
+    "operatingSystemFamily": "LINUX", // LINUX or WINDOWS
+    "cpuArchitecture": "X86_64" // X86_64 or ARM64
+  },
+  "tags": [ // Tags for categorizing and managing tasks
+    {
+      "key": "Environment",
+      "value": "Production"
+    }
+  ],
+  "proxyConfiguration": { // (Optional) Proxy configuration for the task
+    "type": "APPMESH",
+    "containerName": "envoy", // Name of the proxy container
+    "properties": [
+      {
+        "name": "ProxyEgressPort",
+        "value": "15001"
+      },
+      {
+        "name": "AppPorts",
+        "value": "8080"
+      }
+    ]
+  },
+  "ephemeralStorage": { // Additional ephemeral storage (Fargate only)
+    "sizeInGiB": 21 // Size in GiB (default is 20 GiB, max is 200 GiB)
+  }
+}
+
+```
+
+
 
 
 
@@ -310,5 +475,6 @@ To pull a Docker image from a **private Amazon ECR repository**
 #### Useful Links:
 
 * [https://gallery.ecr.aws/](https://gallery.ecr.aws/)
+* [https://ecsworkshop.com/microservices/crystal/](https://ecsworkshop.com/microservices/crystal/)
 * [https://explore.skillbuilder.aws/learn/course/external/view/elearning/14608/amazon-eks-for-developers-online-course-supplement](https://explore.skillbuilder.aws/learn/course/external/view/elearning/14608/amazon-eks-for-developers-online-course-supplement)
 * [https://catalog.workshops.aws/ecs-immersion-day/en-US/10-about-ecs](https://catalog.workshops.aws/ecs-immersion-day/en-US/10-about-ecs)
