@@ -2,6 +2,7 @@
 description: >-
   Most AWS services are region-scoped. Each region has minimum 3 AZ and maximum
   6. Each AZ has one or more discrete data centers.
+icon: earth-africa
 ---
 
 # Global Infrastrucutre
@@ -11,11 +12,9 @@ description: >-
 * Edge locations / PoP (600+) -> 'like :pizza: delivery :truck:' don't run applications but cache common requests. Ex: CloudFront CDN uses to store copies of content closed to end-user for high availa­bility.
 * Local Zones -> 'like a :pizza: shop' to support low latency sensitive applications in geographic proximity to users, core purpose is to achieve single-digit millisecond latencies. We extend VPC to more locations, with local zone subnet, for example, we have N.virginia region with 3 AZs and extend it by defining a Local Zone.
 
-<!---->
-
-* [x] Not full-fledged DC, they replicate the full infrastructure of an AZ but rather provide a subset of services ( i.e., compute / storage/ data base) to support applications that require latency access. _Ex: gaming, video conferencing/streaming (we setup encoding and transcoding services in a Local Zone) , real-time analytics, IoT applications that process data from devices in real-time we use LZ for the data ingestion and processing logic to reduce latency._
-* [x] Local Zones don't have additional fees. You pay only for the services you consume in Local Zones.
-* [x] Users have full access to services in the **parent** region, and we have the option of partitioning workloads between a Local Zone and a Region to increase availability.
+- [x] Not full-fledged DC, they replicate the full infrastructure of an AZ but rather provide a subset of services ( i.e., compute / storage/ data base) to support applications that require latency access. _Ex: gaming, video conferencing/streaming (we setup encoding and transcoding services in a Local Zone) , real-time analytics, IoT applications that process data from devices in real-time we use LZ for the data ingestion and processing logic to reduce latency._
+- [x] Local Zones don't have additional fees. You pay only for the services you consume in Local Zones.
+- [x] Users have full access to services in the **parent** region, and we have the option of partitioning workloads between a Local Zone and a Region to increase availability.
 
 <figure><img src="../.gitbook/assets/LocalZones.png" alt=""><figcaption></figcaption></figure>
 

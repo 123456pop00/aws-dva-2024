@@ -51,7 +51,7 @@ icon: database
   * **Pessimistic locking** assumes multiple transactions will  conflict  and locks the data while the current transaction is in place. Relational DBs."_I’ll lock the data now to make sure no one else can change it while I’m working on it._
 * RCU and WCU are **decoupled** and can be provisioned on demand. Auto-scaling similar to EC2 with min max range.&#x20;
   * RCU and WCUs are spread evenly across all the table's partitions so **Hot Key** (popular item like productId ) or **Hot partitions** or a very heavy items will cause <mark style="color:red;">`ProvisionedThroughputExceededException`</mark>&#x20;
-  * Exceeding burst capacity will lead to <mark style="color:red;">`ProvisionedThroughputExceededException`</mark>
+  * Exceeding **burst capacity** will lead to <mark style="color:red;">`ProvisionedThroughputExceededException`</mark>
   * Items over 400KB will lead to  <mark style="color:red;">`ProvisionedThroughputExceededException`</mark>
 
 ## Consistency Modes
@@ -89,6 +89,15 @@ icon: database
 
 * These can be served from **any replica** (including non-primary replicas).
 * Because writes are propagated asynchronously to other replicas, there's a possibility of stale data being read. This is why it's "eventually" consistent. The lead replica doesn't need to be involved in every eventually consistent read
+
+### DB Throttling :fire: :fire\_engine:
+
+**429 (ThrottlingException)**: Automatically retried using exponential backoff and jitter. You have to fix the issue in your application before submitting the request again. So AWS SDKs for DynamoDB automatically retries requests that receive 400 exception.
+
+* If <mark style="color:red;">`ProvisionedThroughputExceededException`</mark>already happened  -> **Use Retry Logic for Throttling**: Leverage the SDK's automatic retries for throttling errors, and **implement backoff strategies to avoid overwhelming the service.**
+* Use **DAX** if it is RCU issue
+
+
 
 ## Reads / Writes
 

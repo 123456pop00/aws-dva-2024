@@ -151,11 +151,12 @@ Compatible open-source caching solutions: Valkey, Memcached and Redis OSS.
 
 #### **Summary:**
 
-* **Redis (replication)**: Best for advanced caching scenarios, real-time applications & HA , and use cases requiring persistence, replication, and high availability.
+* **Redis (replication)**: Best for advanced caching scenarios, real-time applications & HA , and use cases requiring <mark style="background-color:red;">persistence, replication, and high availability</mark>.
   * **Durability & AOF (Append-Only File)** is a persistence mechanism used by Redis to ensure data durability.
   * ElastiCache Cluster to otimise  reads
-* **Memcached (sharding)**: Best for high-speed, simple caching scenarios where persistence and complex data structures are not needed, as it's not persistent, not HA.
+* **Memcached (sharding)**: Best for high-speed, simple caching scenarios <mark style="background-color:red;">where persistence and complex data structures are not needed, as it's not persistent, not HA</mark>.
   * Ideal performance for simple key-value pairs, with high-throughput, low-latency caching scenarios.
+  * Provides sub-millisecond latency, it **does not support replication.**
 
 #### Cache Eviction&#x20;
 

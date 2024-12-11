@@ -3,12 +3,104 @@
 
 
 * **ECS cluster** with the EC2 launch type is a logical grouping of EC2 instances (1-10 container instances) that ECS can use to run tasks and services.
-* **Service** (Service ≠ Container ) :cook: is an **orchestration** mechanism that manages group of identical **tasks**. It ensures that a specific number of  **tasks** (which contain your containers) are always running.&#x20;
-  * If you specify 3 tasks in a service, ECS ensures 3 containers are running, it keeps track of task failures, and automatically replaces them as needed to maintain the desired number of running tasks.
-  * If one task crashes, ECS will automatically restart it.
+  * If you are running tasks or services that use the EC2 launch type, a cluster is also a grouping of container instances.
+  * If you are using capacity providers, a cluster is also a logical grouping of capacity providers.
+  * A Cluster can be a combination of Fargate and EC2 launch types.
+*   **Service** (Service ≠ Container ) :cook: is an **orchestration** mechanism that manages group of identical **tasks**. It ensures that a specific number of  **tasks** (which contain your containers) are always running.&#x20;
+
+    * If you specify 3 tasks in a service, ECS ensures 3 containers are running, it keeps track of task failures, and automatically replaces them as needed to maintain the desired number of running tasks.
+    * If one task crashes, ECS will automatically restart it.
+
+    There are two service **scheduler** :clock1: :arrows\_clockwise: strategies available:
+
+    * **REPLICA**:
+      * The replica scheduling strategy places and maintains the desired number of tasks across your cluster. By default, the service scheduler spreads tasks across AZs. You can use task placement strategies and constraints to customize task placement decisions.&#x20;
+    * **DAEMON**:
+      * The daemon scheduling strategy deploys <mark style="background-color:red;">exactly one task on each active container</mark> instance that meets all of the task placement constraints that you specify in your cluster. The **service scheduler evaluates the task placement constraints for running tasks and will stop tasks that do not meet the placement constraints**. When using this strategy, there is no need to specify a desired number of tasks, a task placement strategy, or use Service Auto Scaling policies.&#x20;
+
+    <mark style="color:red;">When you launch a daemon service on a cluster with other replica services, Amazon ECS prioritizes the daemon task.</mark> This strategy ensures that resources aren't used by pending replica tasks and are available for the daemon tasks.
+
+<details>
+
+<summary>CDK to bootstrap service</summary>
+
+
+
+```javascript
+
+const cdk = require('aws-cdk-lib'); const ecs = require('aws-cdk-lib/aws-ecs'); const ec2 = require('aws-cdk-lib/aws-ec2'); const elbv2 = require('aws-cdk-lib/aws-elasticloadbalancingv2'); const ecs_patterns = require('aws-cdk-lib/aws-ecs-patterns'); const logs = require('aws-cdk-lib/aws-logs'); const iam = require('aws-cdk-lib/aws-iam');
+class EcsAlbFargateStack extends cdk.Stack { constructor(scope, id, props) { super(scope, id, props);
+// Step 1: Create VPC
+const vpc = new ec2.Vpc(this, 'Vpc', {
+  maxAzs: 2,  // Limit to 2 Availability Zones
+});
+
+// Step 2: Create ECS Cluster
+const cluster = new ecs.Cluster(this, 'EcsCluster', {
+  vpc: vpc,
+});
+
+// Step 3: Create the Load Balancer
+const loadBalancer = new elbv2.ApplicationLoadBalancer(this, 'MyALB', {
+  vpc,
+  internetFacing: true,
+});
+
+// Step 4: Create a Fargate Task Definition with a container
+const taskDefinition = new ecs.FargateTaskDefinition(this, 'TaskDef', {
+  memoryLimitMiB: 512,
+  cpu: 256,
+});
+
+// Create the container definition
+const container = taskDefinition.addContainer('AppContainer', {
+  image: ecs.ContainerImage.fromRegistry('nginx'), // Using the Nginx image as an example
+  logging: ecs.LogDrivers.awsLogs({
+    streamPrefix: 'nginx',
+    logGroup: new logs.LogGroup(this, 'LogGroup', {
+      removalPolicy: cdk.RemovalPolicy.DESTROY,  // Clean up logs on stack deletion
+    }),
+  }),
+});
+
+// Expose the container port
+container.addPortMappings({
+  containerPort: 80,
+});
+
+// Step 5: Create Fargate Service with Load Balancer Integration
+const fargateService = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'MyFargateService', {
+  cluster,
+  memoryLimitMiB: 1024,
+  cpu: 512,
+  desiredCount: 2,
+  taskDefinition,
+  publicLoadBalancer: true, // Set this to true for internet-facing
+});
+
+// Step 6: Grant the Load Balancer permissions to interact with ECS Service
+fargateService.taskDefinition.taskRole.addToPolicy(new iam.PolicyStatement({
+  actions: ['ecs:StartTask'],
+  resources: ['*'],
+}));
+
+// Outputs
+new cdk.CfnOutput(this, 'LoadBalancerDNS', {
+  value: loadBalancer.loadBalancerDnsName,
+  description: 'DNS name of the Load Balancer',
+});
+```
+
+
+
+</details>
+
+
+
 * **EC2 IAM Role**: One role for all EC2 instances in your cluster (manages ECS Agent).
 * **ECS Task Roles**: Defined <mark style="background-color:red;">per task definition,</mark> provides fine-grained permissions to the containers in that task.
-* **Task Definition** blueprint that defines the container :receipt::cook: it describes the task requirements (CPU, Memory, container images, networking type, IAM, etc.)
+* **Task Definition** blueprint that defines the container :receipt::cook: Task definitions specify various parameters for your application. Examples of task definition parameters are which containers to use, which launch type to use, which ports should be opened for your application, task requirements for CPU, Memory, container images, networking type, IAM, etc.)
+  * Each task that uses the **Fargate launch type** has its own isolation boundary and does not share the underlying kernel, CPU resources, memory resources, or elastic network interface with another task.
 *   **Task** is the actual unit that is running container :cookie: (or set of containers) based on the task definition. A single task definition can define **up to ten (10) containers**. This allows you to group multiple containers that work together as part of a single application or service
 
 
@@ -159,7 +251,8 @@ When task is started ECS must know on which EC2 instance to place it.
 
 *   You don’t manage EC2 instances or ASGs. AWS fully abstracts and provisions the underlying compute resources required for your ECS tasks.
 
-    * EC2 instances that Fargate uses are not visible in the **EC2 console**.
+    * EC2 instances that Fargate uses are not visible in the **EC2 console**
+    * Fargate instance corresponds to a single ECS task, you need to **specify task's CPU and memory during creating task definition**. Therefore, it's crucial to right-size your Fargate tasks to ensure they can perform their duties with the desired performance level. If a task struggles due to insufficient CPU or memory for performing its functions, this indicates that the task is not correctly sized and might require additional resources. You can accurately assess the needs of your application by engaging in performance measurement, conducting comprehensive load testing, or closely observing key metrics.
     * You define **Service Auto Scaling policies to scale tasks directly to ASG for EC2 instances**.&#x20;
 
 
@@ -224,7 +317,10 @@ If your ECS task runs a **single container**, then the **Dockerfile** is equival
 
 #### **Core Components of a Task Definition** :white\_check\_mark:
 
+`aws ecs list-task-definitions`
+
 1. **Container Definitions**:
+   * Detailed information such as the container image, port mappings, and health check settings for the container to be used in an ECS task.
    * Specifies the Docker images (e.g., `nginx:latest` or a custom ECR image).
    * Resource requirements (CPU, memory) for container
    * Port mappings `"containerPort": 80, "hostPort": 80`
@@ -237,6 +333,7 @@ If your ECS task runs a **single container**, then the **Dockerfile** is equival
    * Logging, and health checks for each container in the task
 2. **Task-Level Settings**:
    * **Task Networking Mode**: Controls how containers interact with the network (`awsvpc` recommended for Fargate, `bridge` or `host` for EC2).
+     * &#x20;For ECS Fargate, this is restricted to the `awsvpc` mode.
    *   **Volumes**: Defines shared or persistent storage
 
        such as:
@@ -279,7 +376,24 @@ If your ECS task runs a **single container**, then the **Dockerfile** is equival
    * The container in your task has an **internal container port** (e.g., port `80` for a web app).
    * ECS maps this internal container port to an **available host port** on the EC2 instance (e.g., port `32769`).
    * Th<mark style="background-color:red;">e dynamic mapping ensures multiple tasks can run on the same EC2 instance without port conflicts.</mark>
-4. **Routing Traffic**:
+
+<figure><img src="../.gitbook/assets/dynamic-port-mapping.png" alt=""><figcaption></figcaption></figure>
+
+```jsonp
+"portMappings": [
+        {
+          "name": "web-80-tcp",
+          "containerPort": 80,
+          "hostPort": 0,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+```
+
+
+
+1. **Routing Traffic**:
    * When a request comes to the EC2 instance's public IP address and a specific host port (e.g., `:32769`), ECS routes it to the corresponding container port (e.g., port `80`) inside the container.
 
 <table><thead><tr><th width="191">Feature</th><th>EC2 Dynamic Port Mapping</th><th>Fargate with ENI</th></tr></thead><tbody><tr><td><strong>IP Address</strong></td><td>Shared (tasks share the EC2's IP)</td><td>Each task gets its own IP (unique)</td></tr><tr><td><strong>Port Usage</strong></td><td>Dynamic host port mapping, Port mapping is used to expose container ports to the host (e.g., <code>8080:80</code> maps container port <code>80</code> to host port <code>8080</code>).</td><td>Each task has unique private IP. Look for ENIs with descriptions like <code>ECS task: &#x3C;task-id></code>. These correspond to your Fargate tasks.</td></tr><tr><td><strong>Security Groups</strong></td><td>Shared at the EC2 level</td><td>Dedicated per task</td></tr><tr><td><strong>Isolation</strong></td><td>Tasks are less isolated</td><td>Full network-level isolation</td></tr><tr><td><strong>Management</strong></td><td>Requires managing EC2 instances</td><td>Fully managed by AWS (serverless)</td></tr></tbody></table>
@@ -426,17 +540,55 @@ If your ECS task runs a **single container**, then the **Dockerfile** is equival
 
 
 
-### ECS Auto Scaling
+## ECS Auto Scaling
 
-Automatically increase :arrow\_double\_up: / decrease :arrow\_double\_down: ECS tasks
+**Why autoscale?**
 
-1. CPU Utilisation
+#### It’s either a human scales the service, or the orchestrator.
+
+* If we choose to do it manually, this means that as load increases, we need to stop what we are doing to scale the service to meet the load (and not to mention that we have to eventually scale back down once the load clears). This can be tedious and painful.
+* If we let the **orchestrator** handle the scaling in and out for the service, we can focus on continuous improvement, and less on operational heavy lifting. In order to get autoscaling setup, one first needs to know what metric to use as the decision to autoscale. Some example metrics for scaling are CPU utilization, memory utilization, and queue depth.
+
+```javascript
+  const scaling = fargateService.service.autoScaleTaskCount({
+      minCapacity: 2,
+      maxCapacity: 10,
+    });
+    // Scale based on CPU utilization
+    scaling.scaleOnCpuUtilization('ScaleOnCPU', {
+      targetUtilizationPercent: 50, // Scale to maintain 50% CPU usage
+      scaleInCooldown: cdk.Duration.seconds(60),
+      scaleOutCooldown: cdk.Duration.seconds(60),
+    });
+
+    // Alternatively, you can scale on memory usage:
+    scaling.scaleOnMemoryUtilization('ScaleOnMemory', {
+      targetUtilizationPercent: 75, // Scale to maintain 75% memory usage
+      scaleInCooldown: cdk.Duration.seconds(60),
+      scaleOutCooldown: cdk.Duration.seconds(60),
+    });
+```
+
+
+
+Automatically increase :arrow\_double\_up: / decrease :arrow\_double\_down: ECS thresholds (application sweetspot)&#x20;
+
+:checkered\_flag: Typically use **upper and lower thresholds** (number of containers or tasks) **to scale out and in.** Thus, **target tracking** can also be used but it is more simplified, like to maintain 60% utilisation, so as long as we're **averaging 60%** value, we're ok. &#x20;
+
+:checkered\_flag: Cooldown time -> how long we wait before we scale down or up. **Must be longer than the previous scale up/down decision**
+
+1. CPU Utilisation <mark style="background-color:red;">CloudWatch metrics such as CPU utilization are enabled by default.</mark>
 2. Memory - RAM
 3. ALB count per target
 
-* Target tracking - specific cloudwatch&#x20;
-* Step Scaling
-* Scheduled Scaling ( pattern)
+
+
+### Amazon ECS offers three sophisticated service scaling strategies:
+
+1. **Target Tracking Scaling**: This method aims to maintain a specified scaling metric at a target value by automatically adjusting the number of tasks. Target tracking scaling is preferred for its simplicity and low maintenance requirements, making it an ideal choice for businesses seeking operational efficiency without constant manual intervention.
+2. **Step Scaling**: This strategy provides greater control over scaling actions. Users can select metrics, set <mark style="color:red;">threshold</mark> values, and define step adjustments to specify the number of resources to add or remove. It also allows for customizable breach evaluation periods for metric alarms, offering a tailored approach to handling variable workloads effectively.&#x20;
+   1. :arrow\_up:  or decrease tasks that  service runs based on a set of scaling adjustments, known as step adjustments, that vary based on the size of the alarm breach.
+3. **Scheduled Scaling**: This method is best utilized when scaling actions can be <mark style="color:red;">anticipated</mark> based on known demand patterns. It's ideal for applications experiencing predictable traffic fluctuations, enabling proactive resource management to ensure service stability and performance during peak times.
 
 #### How to scale with ECS ?
 
@@ -470,11 +622,75 @@ To pull a Docker image from a **private Amazon ECR repository**
 
 </details>
 
+## Network mode
 
+* awsvpc
+* bridge (default)
+* host
+* NAT If Windows, only the NAT mode is allowed.
+* none
+
+
+
+*   **bridge:**
+
+    * the default network mode for **EC2 launch type** tasks,  utilizes [Docker’s built-in virtual network](https://docs.docker.com/network/bridge/) which runs inside each  EC2 instance hosting the task.
+    * control the network traffic to/from these containers via **port mappings** (i.e., exposing specific container ports to the host
+      * &#x20;For example in order to run two nginx containers with port mapping as 80:80 (host port:container port), one would need two EC2 Instances and this kind of port mapping is called **Static port mapping**.&#x20;
+        *   <mark style="color:red;">When trying to run multiple tasks with static port mapping on the same EC2 instance you will get an error comparable too:</mark>
+
+            ```sh
+            Bind for 0.0.0.0:8080 failed: port is already allocated.
+            ```
+      * **Dynamic port mapping**  allows to run multiple containers over the same host using multiple random host ports. In this case port mapping will look like 0:80(host port:container port) and now multiple containers can run on same EC2 Instance
+
+
+
+    * commonly used in the **EC2 launch type** for running Docker containers on EC2 instances when you want network isolation between containers but still need them to be able to communicate with the outside world via specific ports.
+
+    <figure><img src="../.gitbook/assets/port-mapping.png" alt=""><figcaption></figcaption></figure>
+*   **host**:
+
+    * The task [bypasses Docker’s built-in virtual network](https://docs.docker.com/network/host/) and maps container ports directly to the ENI of the Amazon EC2 instance hosting the task.
+    * containers share the **host’s network stack**, and their ports are directly mapped to the host's ports. Since containers and the host share the same network, there is no **port isolation**. This means each container’s **container port** must be bound to a **specific host port**
+      * Not possible to run more than a single instantiation of a particular task per host, as only the first task will be able to bind to its required port on the EC2 instance.
+      * No way to remap a container port when using host networking mode, any port collisions or conflicts must be managed by changing the configuration of the application inside the container.
+    * This allows for better performance because the container doesn't need to perform network address translation (NAT) or rely on Docker's bridge, and no “userland-proxy” is created for each port -> _can be useful to optimize performance, and in situations where a container needs to handle a large range of ports_
+    * However, it also means containers are less isolated, as they share the same network interface as the host.
+
+
+
+    <figure><img src="../.gitbook/assets/host-mapping-mode.png" alt=""><figcaption></figcaption></figure>
+*   **awsvpc**:
+
+    * In **awsvpc** mode, each container gets its own Elastic Network Interface (ENI) and own  primary private IPv4 address within the VPC. This makes containers behave like EC2 instances in terms of networking.&#x20;
+    * <mark style="background-color:red;">Attachable as ‘IP’ targets to ALB and NLB</mark>
+    * This mode is required for Fargate tasks because Fargate uses **awsvpc** mode by default. It allows for complete isolation between containers, and they can communicate with each other using VPC security groups and routing rules.
+    * Observable from VPC flow logs + Access controlled by SG
+    * Ability  of running multiple copies of the same task definition on the same instance, without needing to worry about port conflicts
+    * Higher performance because there is no need to perform any port translations or contend for bandwidth on the shared docker0 bridge, as you do with the bridge networking mode
+    * **awsvpc** mode is recommended when using **Fargate**.
+
+
+
+<figure><img src="../.gitbook/assets/awsvpc-mode.png" alt=""><figcaption></figcaption></figure>
+
+
+
+* **none**:
+  * In **none** mode, the container does not have any network access. It doesn't connect to the Docker bridge or the host network. It’s typically used when you want a container that does not require networking, for example, a batch job container that performs computations without needing to communicate externally.
+
+## Deployment Strategies :rocket: :desktop:
+
+* **Rolling deployment**: With rolling deployment, the fleet is divided into portions so that all of the fleet isn’t upgraded at once. During the deployment process two software versions, new and old, are running on the same fleet. This method allows a zero-downtime update. If the deployment fails, only the updated portion of the fleet will be affected.
+* **blue/green deployment**: The blue/green deployment strategy is a type of immutable deployment which also requires creation of another environment. Once the new environment is up and passed all tests, traffic is shifted to this new deployment. Crucially the old environment, that is the “blue” environment, is kept idle in case a rollback is needed.
 
 #### Useful Links:
 
 * [https://gallery.ecr.aws/](https://gallery.ecr.aws/)
+* [https://aws.github.io/copilot-cli/docs/getting-started/first-app-tutorial/](https://aws.github.io/copilot-cli/docs/getting-started/first-app-tutorial/)
+* [https://github.com/aws/copilot-cli/](https://github.com/aws/copilot-cli/)[https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs\_services.html#service\_scheduler\_daemon](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html#service_scheduler_daemon)
 * [https://ecsworkshop.com/microservices/crystal/](https://ecsworkshop.com/microservices/crystal/)
 * [https://explore.skillbuilder.aws/learn/course/external/view/elearning/14608/amazon-eks-for-developers-online-course-supplement](https://explore.skillbuilder.aws/learn/course/external/view/elearning/14608/amazon-eks-for-developers-online-course-supplement)
 * [https://catalog.workshops.aws/ecs-immersion-day/en-US/10-about-ecs](https://catalog.workshops.aws/ecs-immersion-day/en-US/10-about-ecs)
+* [https://catalog.us-east-1.prod.workshops.aws/workshops/8c9036a7-7564-434c-b558-3588754e21f5/en-US](https://catalog.us-east-1.prod.workshops.aws/workshops/8c9036a7-7564-434c-b558-3588754e21f5/en-US)

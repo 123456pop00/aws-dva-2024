@@ -5,12 +5,30 @@
 > * JSON format for definitions with ASL ( Amazon Simple Lang) - task sequencing, so order matters :red\_circle:
 > * Offload error handling and retry logic from lambdas to keep them simple and not modify code
 
+## ASL
+
+n the Amazon States Language, these fields filter and control the flow of JSON from state to state:
+
+\- **InputPath** (limit the input that is passed by filtering the JSON notation by using a path)
+
+\- **Parameters** (- pass a collection of key-value pairs, where the values are either static values that you define in your state machine definition, or that are selected from the input using a path.)
+
+_Step Functions applies the InputPath field first, and then the Parameters field. You can first filter your raw input to a selection you want using InputPath, and then apply Parameters to manipulate that input further, or add new values._
+
+\- OutputPath
+
+\- **ResultPath** ( The output of a state can be a copy of its input, the result it produces (for example, the output from a Task state’s Lambda function), or a combination of its input and result
+
+
+
+<figure><img src="../.gitbook/assets/input-output-processing.png" alt=""><figcaption></figcaption></figure>
+
 
 
 ## Errors: 2 types Retry or Catch
 
 * Use Retry to retry failed state -> how many times we want to retry before failing over to Catch / Error state
-* **ResultPath** - is used for **Merging Input and Output**:
+* **ResultPath** - is used for **Merging Input and Output (**&#x69;nput plus the result of the final stat&#x65;**)**:
   * When a task (or state) completes successfully, its output is combined with its input. By default, the output completely replaces the input for the next state.
   * With `ResultPath`, you can **merge the output into a specific part of the input JSON**, instead of overwriting it.
   * Can be used  **in conjunction with error handling logic** to store error information

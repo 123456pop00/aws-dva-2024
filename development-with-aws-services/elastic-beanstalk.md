@@ -11,7 +11,7 @@ coverY: 0
 
 * AWS Elastic Beanstalk supports Java, .NET, PHP, Node.js, Python, Ruby, Go, and Docker
 * It AWS CloudFormation to launch the resources in your environment and propagate configuration changes
-* Can deploy web or worker
+* Can deploy Web  or Worker application:
   * **Web Applications**:
     *   **Single-instance environment**: Great for dev/testing or low-traffic apps.
 
@@ -26,22 +26,22 @@ coverY: 0
   * **Worker Applications**:
     * Handles background jobs.
     * Processes tasks from an Amazon SQS queue. Requests are in a SQS queue and the EC2 instances pull the messages to process them. Scaling depends on the number of SQS messages in the queue.
-* To deploy a worker application that processes periodic background tasks, the application bundle must include a **cron.yaml file.**
+* To deploy a worker application that processes periodic background tasks, the application bundle must include a **cron.yaml**&#x20;
 * Beanstalk provides a **lifecycle policy** to manage application **versions** effectively, you can remove older application versions based on specific criteria:
   * **Time-based**: you can set a policy to discard versions that are older than a certain duration (e.g., 180 **days**).
   * **Count-based**:  limit the total number of application versions stored (e.g., to a maximum of 200).
-  * Elastic Beanstalk can store a maximum of 1000 application versions. If older versions are not removed, you may be unable to deploy new iterations of your application.
+  * Elastic Beanstalk can store a maximum of **1000** application versions. If older versions are not removed, you may be unable to deploy new iterations of your application.
   * Versions currently in use by your environments will not be deleted, r**egardless of the lifecycle policy.**
 * To deploy a new version of the application, package your application as a zip or war file and deploy it using eb deploy command.
 * To configure resources & customise EB **environment** -> Config files in `.ebextensions/` directory in the **root** of the source code
   * Provides more advanced, repeatable, and version-controlled customization option
   * Runs during the EB deployment lifecycle, applies changes automatically.
   * All files have `.config` extension and should be in <mark style="background-color:orange;">YAML(preferred)</mark> or JSON format
-* &#x20;`.ebextensions` directory allows you to manage environment settings that **cannot be configured through the Elastic Beanstalk console** like RDS (Relational Database Service), Elasticache, and DynamoDB can also be specified within these extensions.
-* **Environment configurations** like VPC, RDS, and load balancers are specific to the account and region
+* &#x20;`.ebextensions` directory allows you to manage environment settings that **cannot be configured through the Elastic Beanstalk console** like RDS (Relational Database Service), Elasticache, and DynamoDB&#x20;
+* **Environment configurations** like VPC, RDS, and load balancers are **specific** to the account and region
   * RDS can be created inside (dev env) and outside the EB env ( prod)
 * Manual migration for cross-account -> EB doesn't have direct export/import
-*   Manual migration for LB, **we can't to directly change the load balancer type** from the console.&#x20;
+*   Manual migration for LB, **we can't  directly change the load balancer type** from the console.&#x20;
 
     * **Migrate DNS settings** (e.g., Route 53)  to the new environment's load balancer
       * **Old Environment**: Your app's domain (e.g., `www.example.com`) points to the old EB environment's URL (e.g., `old-env.elasticbeanstalk.com`).
@@ -55,13 +55,13 @@ coverY: 0
 
     * ✅ **Resources are replicated**: Elastic Beanstalk will create a copy of all resources associated with the original environment, such as:
       * EC2 instances
-      * ALB or ELB
+      * ALB or NLB
       * Auto Scaling Group
       * Security Groups
       * Configuration settings
     * ✅ **RDS instance is cloned**, but...
-      * ⚠️ **RDS data is not copied**: The new RDS instance starts with a clean slate. If you need the same data, you must manually back it up and restore it to the cloned instance.
-    * :exclamation:Does **not copy application data** or any configuration outside of **that** environment.
+      * ⚠️ **RDS data is not** : The new RDS instance starts with a clean state. If you need the same data, you must manually **back it up and restore** it to the cloned instance.
+    * :exclamation:Cloning does **not copy application data** or any configuration outside of **that** environment.
 
 
 * Cloning can also be a good starting point for **Blue/Green deployments for isolated features**
@@ -74,6 +74,8 @@ coverY: 0
 
 
 
+:exclamation: You cannot configure **Amazon Athena, AWS Lambda**, **SNS, Kinesis, Step Functions, CloudFront**&#x20;
+
 ## Deployment Strategies&#x20;
 
 {% tabs %}
@@ -81,19 +83,19 @@ coverY: 0
 * Deploys the new version to all instances simultaneously
 * &#x20;It is the quickest strategy but has some **downtime as we deploy to existing instance(s)**
 * Works in single instance and LB env
-* Cheapest , fastest & **default deployment policy**
-* Rollback  -> manual redeploy
+* Cheapest, fastest & **default** deployment **policy**
+* Rollback  -> manual redeploy :hammer\_pick:
 {% endtab %}
 
 {% tab title="Rolling" %}
 * Doesn't work in single instance env
-* Attaches and detaches instances from ALB in batches, taking specified size **out of service while deploying new version on them &** monitoring their health before proceeding to the next batch, we deploy to new and existing instances.
+* Attaches and detaches instances from ALB in batches, taking specified size **out of service while deploying new version on them & monitoring** their health before proceeding to the next batch, we deploy to new and existing instances.
   * **Batch size** defines how many instances are updated at once during the deployment.
-  * Can be set as **percentage** or **fixed number** of instances.  You need to explicitly define the **BatchSizeType** to choose between the two.
-* Minimizes downtime and allows you to have instances running both the old and new versions during the deployment process
-* Reduced capacity\* so you accept the risk of lower level of capacity as servers are taken down
+  * Can be set as **percentage** :pencil2: or **fixed number** :1234: of instances.  You need to explicitly define the **BatchSizeType** to choose between the two.
+* Minimizes downtime and allows you to have instances running <mark style="background-color:orange;">both the old and new versions during the deployment process</mark>
+* **Reduced capacity**\* so you accept the risk of lower capacity as servers are taken down
 * No additional cost
-* Rollback  -> manual redeploy
+* Rollback  -> manual redeploy :hammer\_pick:
 
 ```yaml
 option_settings:
@@ -114,8 +116,8 @@ If a deployment fails after one or more batches completed successfully, the comp
 
 {% tab title="Rolling + Additional Batches" %}
 * Doesn't work in single instance env
-* **Additional batches** make sure that new instances are added before removing the old ones. This ensures we have **no loss of capacity.** This means that new instances (with the updated application version) are created and launched first, before terminating the old instances. This allows you to maintain full capacity during the deployment.
-* Rollback  -> manual redeploy
+* **Additional batches** make sure that **new instance**s are added before removing the old ones. This ensures we have **no loss of capacity** :100: This means that new instances (with the updated application version) are created and launched first, before terminating the old instances. This allows you to maintain full capacity during the deployment.
+* Rollback  -> manual redeploy :hammer\_pick:
 
 ```yaml
 option_settings:
@@ -131,22 +133,21 @@ option_settings:
 {% endtab %}
 
 {% tab title="Immutable" %}
-* When you deploy a new version using **Immutable**, Elastic Beanstalk**k** creates a new environment (with its own resources, like a new ALB and EC2 instances). This new environment is fully set up and tested before it gets traffic.It gets it from swapping the CNAME (its the actual process of updating the DNS record to point to the new environment's load balance).
-* Elastic Beanstalk creates a new, fully separate environment for the new version, similar to the <mark style="background-color:green;">**Green**</mark> environment in Blue/Green.
-* The old environment stays intact until the deployment is successful.
-* The old environment **remains intact** but is no longer receiving traffic after the CNAME swap. It's still there, but it's in a **"standby"** state, and you can choose to delete it manually later
-* **Zero downtime:** New environment is completely isolated until it's ready to replace the old one.
-* **Safest - we duplicate infrastructure** ( mission-critical apps)
-* Rollback -> swap the CNAME back to the old environment
-* Can be slower since we provisioning entire duplicate infrastructure than rolling updates there but guarantees no interruption&#x20;
+* When you deploy a new version using **Immutable**, bs creates a new environment (with its own resources, like a new ALB and EC2 ). This <mark style="background-color:green;">new environmen</mark>t is fully set up and tested before it gets traffic. It gets it from swapping the CNAME (&#x69;_&#x74;s the actual process of updating the DNS record to point to the new environment's load balance)_.
+* Elastic Beanstalk creates a new, separate environment for the new version, similar to the <mark style="background-color:green;">Green</mark> environment in Blue :blue\_heart:/Green :green\_heart:.
+* The old environment **remains intact** but is no longer receiving traffic after the CNAME swap and until the deployment is successful. It's still there, but it's in a **"standby"** state, and you can choose to delete it manually later.
+* **Zero downtime :** New environment is completely isolated until it's ready to replace the old one.
+* **Safest - we duplicate infrastructure** ( mission-critical apps :boom::rocket::woman\_health\_worker:)
+* Rollback -> swap the CNAME back to the old environment :sparkles:
+* Can be slower :hourglass\_flowing\_sand: since we provisioning entire duplicate infrastructure than rolling updates&#x20;
 {% endtab %}
 
 {% tab title="Traffic Splitting " %}
 * Doesn't work in single instance env
-* We point a % of traffic to the new env and after a period of time and validation switch over
-* It is effectively a **canary deployment** mechanism where traffic is gradually split between multiple versions of the application, and you can adjust the allocation based on performance
+* We point a **%** of traffic :vertical\_traffic\_light: to the new env and after a period of time and validation switch over :point\_right:
+* It is effectively a **canary deployment** mechanism where traffic is gradually split between multiple versions of the application, and you can adjust the allocation based on performance :man\_dancing:
 * Allows for **gradual and controlled rollout of new application versions**
-* Deployment :hourglass: can depend on Canary Timeout
+* Deployment time :hourglass: can depend on Canary Timeout
 
 ```yaml
 option_settings:
@@ -162,11 +163,11 @@ option_settings:
 {% tab title="Blue/Green" %}
 _Not direct feature of EB_
 
-* You have two environments: **Blue** (current version) and **Green** (new version).
-* The **Blue** environment serves live traffic, while you deploy the **Green** environment with the new version.
-* After the **Green** environment is fully deployed and tested, you switch traffic to **Green** by updating the DNS (CNAME swap). The traffic switch happens **all at once** after the green environment is validated
-* Once traffic is shifted to **Green**, the **Blue** environment can be deleted or kept as a **backup**.
-* DNS change happens at the ALB level
+* You have two environments: Blue (current version) and Green (new version).
+* The :blue\_heart: environment serves live traffic, while you deploy the :green\_heart: environment with the new version.
+* After the :green\_heart: environment is fully deployed and tested, you switch traffic to it by updating the DNS (CNAME swap). The traffic switch happens **all at once** after the green environment is validated.
+* Once traffic is shifted the **old** :blue\_heart: environment can be deleted or kept as a **backup**.
+* DNS change happens at the ALB level.
 * DB must be outside the EB env because when the env is terminated we lose al resources
 {% endtab %}
 {% endtabs %}

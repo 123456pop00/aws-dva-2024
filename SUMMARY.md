@@ -10,6 +10,7 @@
   * [Route 53](in-scope-aws-services-and-features/vpc-and-networking/route-53.md)
 * [CloudFront](in-scope-aws-services-and-features/cloudfront.md)
 * [Containers](in-scope-aws-services-and-features/containers.md)
+* [Retail-store-cluster](in-scope-aws-services-and-features/retail-store-cluster.md)
 
 ## Development with AWS Services
 

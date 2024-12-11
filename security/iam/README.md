@@ -6,7 +6,7 @@ icon: lock-keyhole
 
 * **User:** can belong to multiple group or don't have to belong to a group (not best practice). **IAM user** represents the person or service that  interacts with AWS.
 * **Groups:** can only contain users not other groups.
-* **Roles:** for EC2, Lambda, Cloud9, or other service / application to perform action on the account. **Trust policies** are only associated **IAM Roles**  to specify the trusted entities that can assume the role.
+* **Roles:** for EC2, Lambda, Cloud9, or other service / application to perform action on the account. **Trust policies** are only associated with **IAM Roles**  to specify the trusted entities that can assume the role.
 * **Policies:** JSON-format documents that outline permissions for AWS identities (such as groups, users, and roles) and can be divided into two main types: **Identity-based** and **Resource-based** policies.
 
 :exclamation: **Identity-based:** policies attached to users, groups, roles to grant THEM permission to perform actions on AWS resources.&#x20;
