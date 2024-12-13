@@ -1,16 +1,40 @@
 ---
-icon: table
+icon: database
 ---
 
 # RDS
 
-Managed DB service for SQL, automatically scales, but we don't have ssh access, but get patching, provisioning.
+<figure><img src="../.gitbook/assets/RDS-mindmap.png" alt=""><figcaption></figcaption></figure>
 
-Lift-and-shift migration -  to move RDBMS to the cloud :truck:
 
-Maximum storage Threshold ( not to scale indefinitely) -> configure is Free storage % is less than 10% of Total storage will auto-scale scale ( 6hrs since last modification ,condition persist over 5min)
 
-## Engines
+* Managed DB service for SQL, automatically scales, but we don't have ssh access, but get patching, provisioning.
+* Automatic host replacement
+* Automatic backups for PITR -> stored on s3 up to 35 days
+  * **PITR** lets you restore your database to a specific point in time within the retention window.
+* **Snapshots are manual, user-initiated backups** that you can take at any time. Snapshots do not have an expiration period **->** s3 kept until you delete
+* Recommendation for **network isolation** i.e. to run in **private subnet of your VPC to isolate ->** both SG at the instance level and ACL on the subnet level protection :european\_castle::closed\_lock\_with\_key:
+  * use IPsec VPN to connect to on premises&#x20;
+
+<figure><img src="../.gitbook/assets/RDS-network-isolation.png" alt=""><figcaption></figcaption></figure>
+
+
+
+* Lift-and-shift migration -  to move RDBMS to the cloud :truck:
+* Maximum storage Threshold ( not to scale indefinitely) -> configure is Free storage % is less than 10% of Total storage will auto-scale scale ( 6hrs since last modification ,condition persist over 5min)
+* CloudWatch integration + :alarm\_clock: **-> SNS to notify** :bell: on over 40 DB events&#x20;
+* No upfront :moneybag: pay for usage but **monthly charge for each instance launched** :rocket:
+  * Reserved RDS instance for 1 -3 year
+* Stop & Start instances for up to 7 days
+* Resource-level IAM policies ( granular access for DEV db instances vs prod instances )&#x20;
+* If my  **EC2 instance** is in a **private subnet** and my **RDS instance** is in the **same VPC** (typically in a private subnet as well), they can communicate directly through the VPC’s **private IP. I only need Security Groups** to allow traffic between your EC2 instance and the RDS instance. For example, the security group of the EC2 instance allows outbound traffic on the MySQL port (e.g., 3306) and the RDS security group allows inbound traffic on that same port.
+* KMS for encryption at rest ( CMK) + TLS intransit
+
+<figure><img src="../.gitbook/assets/TDE-encryption.png" alt=""><figcaption></figcaption></figure>
+
+
+
+## 6 Engines&#x20;
 
 * PostgreSQL
   * Up to **5 Read replicas**
@@ -32,14 +56,32 @@ Maximum storage Threshold ( not to scale indefinitely) -> configure is Free stor
   * IBM DB2
 * Aurora PostgreSQL/MySQL&#x20;
 
+## Storage&#x20;
+
+* supports 3 **types of instance classes** computational and memory instances
+  * Standard -> m1 -m6 series
+  * Memory optimised  -> **r series** (ideal for large RAM)
+  * burstable t2, t3 series -> with ability to burst to full CPU
+
+<figure><img src="../.gitbook/assets/RDS-storage.png" alt=""><figcaption></figcaption></figure>
+
+## Storage Auto-Scaling
+
+<figure><img src="../.gitbook/assets/RDS-storage-auto-scaling.png" alt=""><figcaption></figcaption></figure>
 
 
-### **Aurora** :woman\_office\_worker:**- AWS-native relational database** compatible with MySQL and PostgreSQL
 
-a proprietary technology from AWS, and is designed to improve upon standard MySQL and PostgreSQL
 
-* Fully managed by RDS, which automates time-consuming administration tasks like hardware provisioning, database setup, patching, and backups.
-* HA native
+
+
+
+### **Aurora** :woman\_office\_worker::star: **AWS-native relational database** compatible with MySQL and PostgreSQL
+
+> proprietary technology from AWS, is designed to improve upon standard MySQL and PostgreSQL
+
+* Fully managed by RDS, which automates time-consuming administration tasks like hardware provisioning, database setup, patching, and backups -> **no administration burden**
+* **HA native**
+* **Multi-master cluster features** :star: -> ie scale R/W ops -> <mark style="background-color:red;">no need to failover mechanism</mark>
 * Aurora allows up to **15** low-latency read **replicas**
   * Has Reader and Writer instance&#x20;
   * You're charged  :dollar: for the replicas used
@@ -57,35 +99,84 @@ a proprietary technology from AWS, and is designed to improve upon standard MySQ
   * Costs 20% more than RDS but more efficient
   * **No free tier**
 
+<figure><img src="../.gitbook/assets/aurora-multi-master.png" alt=""><figcaption></figcaption></figure>
 
 
-## RDS Deployments
 
-**RDS Multi-AZ deployments’ - high availability, not for scaling.**
+## RDS Deployments :airplane\_departure:
 
-* Typically SYNC replication to standby DB in another AZ&#x20;
-* **Automatic failover** works only in **Multi-AZ deployments**
-* Failover to cross AZ failover replica if main DB crashes, it ensures HA,  possible because there's one DNS name for main and standby DB
-  * loss of instance stoarge
-  * loss of AZ
-  * loss of network
-* Data in Failover AZ is passive until RDS will trigger a failover, fully automatic
-* We have single static DNS  string like `jdbc:mysql://.rds.amazonaws.com:3306/yourdatabase,`thise allows for seamless failover to standby instance in another Availability Zone (AZ).
+### **RDS Multi-AZ deployments -> high availability, not for scaling**
+
+<div align="left"><figure><img src="../.gitbook/assets/multi-az-instance-depl.png" alt="" width="375"><figcaption></figcaption></figure></div>
+
+When you provision your database with the Multi-AZ option, Amazon RDS automatically provisions and maintains a **synchronous** standby instance, which doesn't serve read traffic.
+
+_<mark style="color:blue;">It's called a Multi-AZ DB instance deployment -> Reliable? Absolutely. Scalable? Not really.</mark>_
+
+* <mark style="color:blue;">SYNC</mark> replication to standby DB in another AZ ->  primary :crossed\_swords: database synchronously replicates the data to the **standby** instance (this ensures no data loss during failover), and  RDS automatically fails over to the standby instance if the primary instance fails -> good for :sunny: fault isolation :warning::exclamation: and HA **no reads from it** :scream\_cat:
+* Writes are only possible on the **primary instance**.
+* **Not meant for** read scaling or multi-region deployments.
+* No need to stop DB to enable ->  you modify and snapshot is taken and restored in anothe AZ, and synch mechanism is established
+* **Automatic failover** works only in **Multi-AZ deployments ->** possible because there's one DNS name for main and standby DB
+  * A single static DNS  string like `jdbc:mysql://.rds.amazonaws.com:3306/mydb,`this allows for seamless failover to standby instance in another AZ
+  * You don't get a DNS name for the standby instance, and it **won't handle any traffic** unless a failover occurs
+  * If a failover happens, your application may briefly lose connectivity while the DNS name updates -> :warning: The failover typically completes within **60-120 seconds**, depending on the database engine&#x20;
+
+<details>
+
+<summary>Failover process <span data-gb-custom-inline data-tag="emoji" data-code="1f32a">🌪️</span></summary>
+
+**Event Trigger**: Failover is triggered in scenarios like:
+
+* The primary instance becomes unavailable (e.g., hardware failure, OS crash).
+* Loss of network, AZ datacenter&#x20;
+* Loss of instance storage (if AZ experiences an outage, the instance storage in that AZ could be affected,  or issues such as file system corruption or metadata inconsistencies)
+* Planned maintenance (e.g., patching or updates).
+* Manual reboot with failover initiated by you.
+
+**After Failover:**
+
+* \*Old primary in AZ1 is replaced.
+* Standby in AZ2 is promoted to primary.
+* A new standby instance is created in AZ1 (or another AZ).
+
+</details>
+
+### Multi-AZ DB cluster deployment
+
+:white\_check\_mark: When the deployment has **2 standby  instances,** it's called a _Multi-AZ DB cluster deployment_. A Multi-AZ DB cluster deployment has standby DB instances that provide failover support and can also serve read traffic.
+
+* One writer DB instance and two reader DB instances in three separate Availability Zones in the same AWS Region.
+*   Multi-AZ DB clusters are supported only for the **MySQL** and **PostgreSQL** DB engines.
+
+    \
+
+
+
+
+### **RDS Multi-Region deployments ->** Disaster Recovery (DR) and Improved Global Performance
+
+_<mark style="color:blue;">Good for global reach, but you’ll have to be the one pressing buttons during disasters</mark>_.
+
+
 
 
 
 &#x20;Multi-Region deployments -  purpose is disaster recovery and local performance.
 
-* Cross region replication costs
-* Good performance because they read from local DB
 
-**RDS Read replicas - purpose is scalability (for READS), not HA.**
 
-Purpose to offload read-heavy traffic from the primary database to these replicas, improving the overall read performance.
+## **RDS Read Replicas -> for scalability, not HA.**
 
-* Replicas for reads, have <mark style="color:purple;">ASYNC replication</mark> => reads are eventually consistent\*
-* Replicas can be Cross AZ or Cross Region or within AZ
-  * If your master DB is in a single AZ and you create **read replicas in different AZs**, you still don’t get automatic failover in the event of a primary DB failure -> need to **manually promote a read replica to master**
+Purpose to <mark style="color:blue;">offload read-heavy traffic from the primary database</mark> to these replicas, improving the overall read performance and increases the **aggregate read-throughput.**
+
+<figure><img src="../.gitbook/assets/RDS-read-replicas.png" alt=""><figcaption></figcaption></figure>
+
+
+
+* Scales out by ASYNC replication with reads being eventually consistent\*
+* Replicas can be withn AZ, cross-AZ, cross-Region
+  * If your master DB is in a single AZ and you create **read replicas in different AZs**, you  <mark style="background-color:red;">don’t get automatic failover in the event of a primary DB failure</mark> -> need to **manually promote a read replica to master**
 * Each read replica has its **own DNS endpoint**. You can **connect** directly to a **specific** **read replica** using these endpoints to offload read traffic from the primary instance.
 
 ```javascript
@@ -107,7 +198,7 @@ Creates staging env. It copies a production database environment to a separate, 
 
 <figure><img src="../.gitbook/assets/image (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-## RDS Proxy&#x20;
+## RDS Proxy :sweat\_drops:
 
 allows for apps to pool & share connections to RDS instead of establishing new,&#x20;
 
