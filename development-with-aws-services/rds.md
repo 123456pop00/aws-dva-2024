@@ -121,6 +121,7 @@ _<mark style="color:blue;">It's called a Multi-AZ DB instance deployment -> Reli
   * A single static DNS  string like `jdbc:mysql://.rds.amazonaws.com:3306/mydb,`this allows for seamless failover to standby instance in another AZ
   * You don't get a DNS name for the standby instance, and it **won't handle any traffic** unless a failover occurs
   * If a failover happens, your application may briefly lose connectivity while the DNS name updates -> :warning: The failover typically completes within **60-120 seconds**, depending on the database engine&#x20;
+* For scaling read traffic, **you can create read replicas** from the primary  instance in the same or cross- region. **Up to 5 read replicas** are supported for a **single primary instance** (this limit applies across all regions).
 
 <details>
 
@@ -142,15 +143,12 @@ _<mark style="color:blue;">It's called a Multi-AZ DB instance deployment -> Reli
 
 </details>
 
-### Multi-AZ DB cluster deployment
+#### Multi-AZ DB cluster deployment
 
 :white\_check\_mark: When the deployment has **2 standby  instances,** it's called a _Multi-AZ DB cluster deployment_. A Multi-AZ DB cluster deployment has standby DB instances that provide failover support and can also serve read traffic.
 
 * One writer DB instance and two reader DB instances in three separate Availability Zones in the same AWS Region.
 *   Multi-AZ DB clusters are supported only for the **MySQL** and **PostgreSQL** DB engines.
-
-    \
-
 
 
 
@@ -158,15 +156,11 @@ _<mark style="color:blue;">It's called a Multi-AZ DB instance deployment -> Reli
 
 _<mark style="color:blue;">Good for global reach, but you’ll have to be the one pressing buttons during disasters</mark>_.
 
-
-
-
-
 &#x20;Multi-Region deployments -  purpose is disaster recovery and local performance.
 
 
 
-## **RDS Read Replicas -> for scalability, not HA.**
+### **RDS Read Replicas -> for scalability, not HA.**
 
 Purpose to <mark style="color:blue;">offload read-heavy traffic from the primary database</mark> to these replicas, improving the overall read performance and increases the **aggregate read-throughput.**
 
@@ -175,7 +169,7 @@ Purpose to <mark style="color:blue;">offload read-heavy traffic from the primary
 
 
 * Scales out by ASYNC replication with reads being eventually consistent\*
-* Replicas can be withn AZ, cross-AZ, cross-Region
+* Replicas can be within AZ, cross-AZ, cross-Region
   * If your master DB is in a single AZ and you create **read replicas in different AZs**, you  <mark style="background-color:red;">don’t get automatic failover in the event of a primary DB failure</mark> -> need to **manually promote a read replica to master**
 * Each read replica has its **own DNS endpoint**. You can **connect** directly to a **specific** **read replica** using these endpoints to offload read traffic from the primary instance.
 
@@ -200,7 +194,11 @@ Creates staging env. It copies a production database environment to a separate, 
 
 ## RDS Proxy :sweat\_drops:
 
-allows for apps to pool & share connections to RDS instead of establishing new,&#x20;
+> Using an RDS Proxy allows your applications to pool and share database connections to help them scale.&#x20;
+>
+> When you create an RDS Proxy with your database, RDS uses the database name as part of the proxy identifier.
+
+
 
 **Single Proxy Endpoint**: When you set up RDS Proxy, AWS provides you with a single endpoint for the proxy, such as:
 

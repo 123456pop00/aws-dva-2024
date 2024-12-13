@@ -10,6 +10,8 @@ icon: database
   * **Strong Schema Flexibility:**
     * While DynamoDB is schema-less, it is  more like schema-**flexible**. Each item in a table can have a different set of attributes, but the **Primary Key is mandatory for every item.**
 * Max item size 400KB
+* SC reads can be made via VPC&#x20;
+* Use TTL to expire items and not use WCU for delete item calls ( epoch time)
 * Tables - Standard and Standard IA
 * Attempts to manage hot partitions using **adaptive capacity**, which reallocates unused capacity from underutilised partitions to those experiencing high demand. Has limits.
 * On-demand and provisioned capacity modes. Switch modes once in 24 hrs. On-demand is :money\_mouth: \*2,5 more expensive no need to plan RCU and WCUs insted you get RRU and WRU (write request units). Best mode for unknown workloads, unpedictable traffic.
@@ -46,6 +48,11 @@ icon: database
     One partition supports up to <mark style="color:red;">1000</mark> **write capacity units (WCUs)**.
   * For **read capacity (RCUs)**:\
     One partition supports up to <mark style="color:red;">3000</mark> **strongly consistent RCUs** or **six thousand eventually consistent RCUs**.
+
+<figure><img src="../../.gitbook/assets/DDB-rcu-wcu.png" alt=""><figcaption></figcaption></figure>
+
+
+
 * Optimistic Locking:  concurrency writes/model can be implemented using DynamoDB **conditional writes.**
   * **Optimistic locking** assumes multiple transactions will not conflict with each other. Usually takes note of a version number or timestamp to be checked.  _"I’ll try to do my work, and only if there’s a conflict, I’ll stop and handle it."_
   * **Pessimistic locking** assumes multiple transactions will  conflict  and locks the data while the current transaction is in place. Relational DBs."_I’ll lock the data now to make sure no one else can change it while I’m working on it._
@@ -101,7 +108,7 @@ icon: database
 
 ## Reads / Writes
 
-<table><thead><tr><th width="182"></th><th>READS</th><th>WRITES</th></tr></thead><tbody><tr><td><strong>API Calls</strong></td><td><code>GetItem</code>, <code>Query</code>, <code>Scan</code>, <code>BatchGetItem</code></td><td><code>PutItem</code>, <code>UpdateItem</code>, <code>DeleteItem</code>, <code>BatchWriteItem</code> and  for all operations, you must specify the <strong>primary key</strong> (<code>--key</code>) to identify the item being worked on.</td></tr><tr><td><strong>Batch Operations(</strong> for speed &#x26; simplicity)</td><td><strong><code>BatchGetItem</code></strong>: Retrieves multiple items by primary key.<br>Supports up to <strong>100 items or 16 MB</strong> per request.<br>Does not support filters or expressions. Items are retrieved in parallel. </td><td><strong><code>BatchWriteItem</code></strong>: Performs up to <strong>25</strong> <code>PutItem</code> or <code>DeleteItem</code> operations per request or 16 MB.<br>Cannot update items, only create or delete them. Can't do <mark style="color:red;"><code>UpdateItem</code> -> Atomicity Challenge (ie merge attributes, use counter).</mark> Use <strong><code>UpdateItem</code></strong> API for each item in a loop in your application.</td></tr><tr><td><strong>Transactional Mode</strong></td><td>Supports <code>TransactGetItems</code> for ACID-compliant reads.</td><td>Supports <code>TransactWriteItems</code> for ACID-compliant writes (combines multiple write operations).</td></tr><tr><td><strong>Performance</strong> </td><td><p><strong>RCU (Read Capacity Units)</strong>: </p><ul><li>Eventually consistent -> <strong>2</strong>  under 4 KB <strong>items</strong> = 1 RCU; </li><li>Strongly consistent -> <strong>1 item</strong> under 4 KB = 1 RCU.</li><li>Items over 4kb we round up to calculate <span data-gb-custom-inline data-tag="emoji" data-code="1f44d">👍</span><span data-gb-custom-inline data-tag="emoji" data-code="2757">❗</span></li></ul></td><td><strong>WCU (Write Capacity Units)</strong>: 1 write for 1 KB item = 1 WCU.</td></tr><tr><td><strong>Conditional Logic</strong></td><td><p><strong><code>KeyConditionExpression</code></strong> limits the number of items retrieved from the table. Mandatory PK. Used in specific operations like <code>GetItem</code>,</p><p></p><p><strong><code>FilterExpression</code></strong> only narrows down the results after the Query, so it doesn’t save RCUs.</p><p><strong><code>ProjectionExpression</code></strong> minimizes data transferred, saving network bandwidth but doesn’t reduce RCUs either.</p></td><td><p><strong>Atomic Operations</strong>: Conditions ensure operations are atomic, avoiding overwrites or race conditions.</p><p></p><p><strong>Do not replace the need for the primary key</strong></p><p> </p><p><strong><code>ConditionExpression</code></strong>: Common to all conditional writes: </p><ul><li>Existence (<code>attribute_exists</code>, <code>attribute_not_exists</code>)</li><li>Comparisons (<code>&#x3C;</code>, <code>></code>, <code>=</code>, etc.)</li><li>Logical operators (<code>AND</code>, <code>OR</code>, <code>NOT</code>)</li></ul></td></tr><tr><td>Indexes fro Flexibility</td><td>Supports <strong>Global Secondary Index (GSI)</strong> and <strong>Local Secondary Index (LSI)</strong> for querying with alternate key patterns.</td><td>GSIs support eventual consistency; LSIs must be strongly consistent.</td></tr></tbody></table>
+<table><thead><tr><th width="182"></th><th>READS</th><th>WRITES</th></tr></thead><tbody><tr><td><strong>API Calls</strong></td><td><code>GetItem</code>, <code>Query</code>, <code>Scan</code>, <code>BatchGetItem</code></td><td><code>PutItem</code>, <code>UpdateItem</code>, <code>DeleteItem</code>, <code>BatchWriteItem</code> and  for all operations, you must specify the <strong>primary key</strong> (<code>--key</code>) to identify the item being worked on.</td></tr><tr><td><strong>Batch Operations(</strong> for speed &#x26; simplicity)</td><td><strong><code>BatchGetItem</code></strong>: Retrieves multiple items by primary key.<br>Supports up to <strong>100 items or 16 MB</strong> per request.<br>Does not support filters or expressions. Items are retrieved in parallel. </td><td><p><strong><code>BatchWriteItem</code></strong>: Performs up to <strong>25</strong> <code>PutItem</code> or <code>DeleteItem</code> operations per request or 16 MB.<br>Cannot update items, only create or delete them. Can't do <mark style="color:red;"><code>UpdateItem</code> -> Atomicity Challenge (ie merge attributes, use counter).</mark> Use <strong><code>UpdateItem</code></strong> API for each item in a loop in your application. <mark style="color:red;"><code>UpdateItem call -> consumes entire WCU</code></mark> DynamoDB internally needs to read the entire item, modify it and write it back to disk, so you pay for the <strong>entire</strong> item, not the small part which you modified.  Even if you update just a subset of the item's attributes, <mark style="background-color:yellow;"><strong>UpdateItem will still consume the full amount of provisioned throughput.</strong></mark></p><p><br></p></td></tr><tr><td><strong>Transactional Mode</strong></td><td>Supports <code>TransactGetItems</code> for ACID-compliant reads.</td><td>Supports <code>TransactWriteItems</code> for ACID-compliant writes (combines multiple write operations).</td></tr><tr><td><strong>Performance</strong> </td><td><p><strong>RCU (Read Capacity Units)</strong>: </p><ul><li>Eventually consistent -> <strong>2</strong>  under 4 KB <strong>items</strong> = 1 RCU; </li><li>Strongly consistent -> <strong>1 item</strong> under 4 KB = 1 RCU.</li><li>Items over 4kb we round up to calculate <span data-gb-custom-inline data-tag="emoji" data-code="1f44d">👍</span><span data-gb-custom-inline data-tag="emoji" data-code="2757">❗</span></li></ul></td><td><strong>WCU (Write Capacity Units)</strong>: 1 write for 1 KB item = 1 WCU.</td></tr><tr><td><strong>Conditional Logic</strong></td><td><p><strong><code>KeyConditionExpression</code></strong> limits the number of items retrieved from the table. Mandatory PK. Used in specific operations like <code>GetItem</code>,</p><p></p><p><strong><code>FilterExpression</code></strong> only narrows down the results after the Query, so it doesn’t save RCUs.</p><p><strong><code>ProjectionExpression</code></strong> minimizes data transferred, saving network bandwidth but doesn’t reduce RCUs either.</p></td><td><p><strong>Atomic Operations</strong>: Conditions ensure operations are atomic, avoiding overwrites or race conditions.</p><p></p><p><strong>Do not replace the need for the primary key</strong></p><p> </p><p><strong><code>ConditionExpression</code></strong>: Common to all conditional writes: </p><ul><li>Existence (<code>attribute_exists</code>, <code>attribute_not_exists</code>)</li><li>Comparisons (<code>&#x3C;</code>, <code>></code>, <code>=</code>, etc.)</li><li>Logical operators (<code>AND</code>, <code>OR</code>, <code>NOT</code>)</li></ul></td></tr><tr><td>Indexes fro Flexibility</td><td>Supports <strong>Global Secondary Index (GSI)</strong> and <strong>Local Secondary Index (LSI)</strong> for querying with alternate key patterns.</td><td>GSIs support eventual consistency; LSIs must be strongly consistent.</td></tr></tbody></table>
 
 ### Conditional Expressions
 
@@ -281,23 +288,48 @@ If someone has already registered with the email, the system returns an error an
 
 * **Syntax**: `attribute_name BETWEEN value1 AND value2`
 
+## DAX
 
-
-
-
-
-
-
-
-
-
-
-
-
+* DynamoDB-compatible caching service that enables you to benefit from fast in-memory performance for demanding applications.
+* Write-Through caching -> passes through Strongly Consistent reads but does **not cache them**&#x20;
+* Reduces response times of **eventually-consistent reads** by an order of magnitude
+* Only **fixed hot read partitions NOT writes** :exclamation:
 
 
 
 ## DynamoDB Streams
 
 * Allows to capture a time-ordered sequence of item-level modifications in a table. It's integrated with AWS Lambda so that you create triggers that automatically respond to events in real-time.
+* Items are strictly ordered for a given PK
+* Essentially a change log for of updates of  DDB table
+* Events can be used as triggers for lambda&#x20;
+* KCL compatiable&#x20;
+
+## Design Consideration
+
+* Keep large objects in **s3 and only store metadata in DynamoDb**
+* Perfect for 1 - 4 KB size objects&#x20;
+* Compress large items before storing, store as **binary attributes**
+
+
+
+<figure><img src="../../.gitbook/assets/DDB-chunk-large-item.png" alt=""><figcaption></figcaption></figure>
+
+* If you know to have **hot partition key or large object-** consider **Scatter-Gather ->** beak it into separate nodes and read/write  object in parallel chunks and **assemble it when reading**
+  * **Scatter:**\
+    A large task is split into smaller chunks (subtasks) and distributed (scattered) to multiple workers, nodes, or servers for parallel processing.
+  * **Gather:**\
+    Once the workers complete their tasks, the results are collected (gathered), processed, or combined into a final result.
+
+### Hot & cold :cold\_face: data
+
+<figure><img src="../../.gitbook/assets/DDb-hot-cold-data.png" alt=""><figcaption></figcaption></figure>
+
+
+
+### Optimistic Locking -> ensure data hasn't change -> write conditionally
+
+<figure><img src="../../.gitbook/assets/DDB-optimistic-lock.png" alt=""><figcaption></figcaption></figure>
+
+
 
