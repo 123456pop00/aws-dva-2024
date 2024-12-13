@@ -22,6 +22,8 @@ icon: swap-arrows
 >   * can use parameters in the method to form cache keys so that API Gateway caches the method's responses depending on the parameter values used
 >   * Two ways to verify caching:
 >     1. CloudWatch Metrics: **CacheHitCount** and **CacheMissCount**.
+>        1. **CacheHitCount:** Number of requests served from the API cache in a given period
+>        2. **CacheMissCount:** Number of requests served from the backend in a given period, when API caching is turned on
 >     2. Create a timestamp and include it in your API response.
 > * import a REST API from an external definition file -  OpenAPI (Swagger™ is a project used to describe and document RESTful APIs.)
 > * **transform and validate request response**&#x20;
@@ -78,6 +80,25 @@ A hostname for an API in API Gateway that is deployed to a specific Region. The 
 
 <div align="left"><figure><img src="../../.gitbook/assets/apiGW-integrations.png" alt="" width="356"><figcaption></figcaption></figure></div>
 
+## **Data transformations with mapping templates VTL**
+
+:superhero: Mapping templates can be added to the integration request to transform the incoming request to the format required by the backend of the application or to transform the backend payload to the format required by the method response.
+
+* REST JSON to SOAP XML  :apple: -> :tangerine:
+
+**Key variables for transformations**
+
+<figure><img src="../../.gitbook/assets/apiGW-mappingVTL.png" alt=""><figcaption></figcaption></figure>
+
+### **Offloading request validation**&#x20;
+
+* API GW handleS some of your basic validations, rather than making the call or building that validation into the backend.
+* API Gateway verifies :thumbsup:
+  * required request parameters in the URL, query string, and headers of an incoming request are included and **non-blank**
+  * applicable request payload adheres to the configured JSON request model of the method :grey\_question:
+
+
+
 ## 2 options to create RESTful APIs—REST APIs and HTTP APIs
 
 ### REST&#x20;
@@ -127,9 +148,23 @@ A hostname for an API in API Gateway that is deployed to a specific Region. The 
 
 Test results include simulated CloudWatch logs. No data is actually written to CloudWatch when testing. Although logs are not generated, **but the APIs are actually executed.**
 
+### API Gateway has two types of CloudWatch logs built in
+
+1. Execution logs  ->   useful to troubleshoot APIs, but can result in logging sensitive data, it is recommended you **don't enable Log full requests/responses data for production API**
+2. Access logs -> provides details about who's invoking your API. This includes everything including IP address, the method used, the user protocol, and the agent.
+
+<figure><img src="../../.gitbook/assets/apiGW-exec-logs.png" alt=""><figcaption></figcaption></figure>
+
+### **Calculating API Gateway overhead = Latency - IntegrationLatency**
+
+Two key metrics that are used to calculate the API Gateway overhead of deployed APIs are the **Latency** and **IntegrationLatency**.
+
+1. The latency metric gives you details about how long it takes for a <mark style="background-color:red;">**full round-trip response**</mark>, :fly: from the second your customer invokes your API to when your API responds with the results. This is a full round-trip duration of an API request through API Gateway.
+2. Integration latency is how long it takes for API Gateway to make the invocation to your backend and receive the response :clock730: :fax:
+
+**The difference between these two metrics gives you your API Gateway overhead**
 
 
-**Latency:** Latency is the time between the receipt of the request from the caller and the returned response.
 
 ### **Simplify version management with stage variables -> r**etrieved dynamically at runtime
 
@@ -153,9 +188,76 @@ You can also **inject stage-dependent items at runtime such as:**
 
 
 
+## Authorizing with IAM -> 3 ways :heart::pink\_heart::heart\_decoration:
+
+### IAM &#x20;
+
+* When you turn on IAM authorization, all requests are required to be signed using the AWS Version 4 signing process (also known as Sig v4).
+* The process uses your AWS **access key and secret key to compute an HMAC signature** using SHA 256. You can obtain these keys as an IAM user or by assuming an IAM role.
+* The :key: information is **added to the Authorization header** and behind the scenes, API Gateway will take that **signed request, parse it, and determine whether the user who signed the request has the IAM permissions to invoke your API.**
+* Best for internal systems
+
+<figure><img src="../../.gitbook/assets/apiGW-iam-authorizer.png" alt=""><figcaption></figcaption></figure>
+
+* For  **execute-api** permission, create IAM policies that permit a specified API caller to invoke the **desired API method**.To apply this IAM policy on the API method, you need to configure the API method to use an authorization type of **AWS\_IAM**.
+
+<figure><img src="../../.gitbook/assets/apiGW-manageapiIAM.png" alt=""><figcaption></figcaption></figure>
+
+<figure><img src="../../.gitbook/assets/apiGW-executeIAM.png" alt=""><figcaption></figcaption></figure>
 
 
 
+### **Lambda** Authorizers :performing\_arts: 2 types -> token :coin: OR requestParams ( if you need more information about the request itself) :interrobang:
+
+#### - A Lambda Authorizer is a Lambda function that you can write to perform any custom authorization that you need.
+
+* &#x20;to support bearer token authentication strategies such as OAuth or SAML
+* if you use OAuth strategy as an organization, you may want to consider Lambda Authorizer
+* When a client calls your API, API Gateway verifies whether a Lambda Authorizer is configured for the API method
+* In this call, API Gateway supplies the **authorization** **token** (or the request parameters based on the type of authorizer), and the Lambda function returns a policy that allows or denies the caller’s req
+* Supports **an optional policy cache** for your Lambda Authorizer ->  increases performance by **reducing** invocations of your Lambda Authorizer **for previously authorized tokens**. With this cache, you can <mark style="background-color:red;">configure a custom TTL.</mark>
+* API Gateway Lambda Authorizer **blueprint function**
+
+<figure><img src="../../.gitbook/assets/apiGW-token-lambdaAuth.png" alt=""><figcaption></figcaption></figure>
+
+**The Lambda function of the REQUEST authorizer type verifies the input request parameters and returns an Allow IAM policy on a specified method.**&#x20;
+
+<figure><img src="../../.gitbook/assets/apiGW-requestParams-lambdaAuth.png" alt=""><figcaption></figcaption></figure>
+
+The <mark style="color:green;">**ALLOW**</mark> will only be returned **if all the required parameter values match the preconfigured ones**
+
+### &#x20;**Amazon Cognito with user pools**
+
+To use an Amazon Cognito user pool with your API, you must first **create** an authorizer of the **COGNITO\_USER\_POOLS authorizer type**, and then configure an API method to use that authorizer
+
+* After a user is authenticated against CUP, they **obtain an OpenID Connect (OIDC)** token formatted in a JSON web token.&#x20;
+* Users who have signed in to your application will have tokens provided to them by the user pool.
+* Then that **token** can be used by your application to **inject** information into a **header in subsequent API calls that you make against your API Gateway endpoint.**
+* API call succeeds only if the required token is supplied :white\_check\_mark:
+
+<figure><img src="../../.gitbook/assets/apiGW-cupAuth.png" alt=""><figcaption></figcaption></figure>
+
+### Resource policies&#x20;
+
+* If the user authenticates successfully with IAM, policies attached to the IAM user and resource policy are evaluated together
+* Use resource policies to provide access to another AWS account, or to limit access to your API from a particular set of IP address ranges, or VPC.
+
+This is done by specifying an effect of DENY and an **IpAddress** condition with an array of source IP addresses.
+
+<figure><img src="../../.gitbook/assets/apiGW-resourcePolicy.png" alt=""><figcaption></figcaption></figure>
+
+_**Since the Principal in the policy is set to "\*", other authorization types can be used alongside the resource policy. However, if the Principal is set to "AWS," authorization will fail for all resources not secured with AWS\_IAM authorization, including unsecured resources.**_
+
+
+
+
+
+
+
+#### Useful Links:
+
+* [https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-authorization-flow.html](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-authorization-flow.html)
+* [https://serverlessland.com/](https://serverlessland.com/)
 
 
 

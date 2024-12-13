@@ -6,6 +6,8 @@ icon: database
 
 <figure><img src="../.gitbook/assets/RDS-mindmap.png" alt=""><figcaption></figcaption></figure>
 
+<figure><img src="../.gitbook/assets/SQLvsNoSQL.png" alt=""><figcaption></figcaption></figure>
+
 
 
 * Managed DB service for SQL, automatically scales, but we don't have ssh access, but get patching, provisioning.

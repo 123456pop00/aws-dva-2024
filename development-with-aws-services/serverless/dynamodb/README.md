@@ -1,10 +1,17 @@
 ---
 icon: database
+cover: >-
+  https://images.unsplash.com/photo-1557672172-298e090bd0f1?crop=entropy&cs=srgb&fm=jpg&ixid=M3wxOTcwMjR8MHwxfHNlYXJjaHw4fHxjb2xvcmZ1bCUyMHBhaW50fGVufDB8fHx8MTczNDEyODg0NXww&ixlib=rb-4.0.3&q=85
+coverY: 0
 ---
 
 # DynamoDB
 
 ## Key Features :key2:&#x20;
+
+<figure><img src="../../../.gitbook/assets/DDB.png" alt=""><figcaption></figcaption></figure>
+
+
 
 * Fully managed, replicated across AZs, **distributed**(=horizontal scaling)NoSQL DB that can scale both reads and writes horizontally.&#x20;
   * **Strong Schema Flexibility:**
@@ -14,7 +21,11 @@ icon: database
 * Use TTL to expire items and not use WCU for delete item calls ( epoch time)
 * Tables - Standard and Standard IA
 * Attempts to manage hot partitions using **adaptive capacity**, which reallocates unused capacity from underutilised partitions to those experiencing high demand. Has limits.
-* On-demand and provisioned capacity modes. Switch modes once in 24 hrs. On-demand is :money\_mouth: \*2,5 more expensive no need to plan RCU and WCUs insted you get RRU and WRU (write request units). Best mode for unknown workloads, unpedictable traffic.
+* On-demand and provisioned capacity modes. Switch modes once in 24 hrs. On-demand is :money\_mouth: \*2,5 more expensive no need to plan RCU and WCUs instead you get RRU and WRU (write request units). Best mode for unknown workloads, unpredictable traffic.
+
+<figure><img src="../../../.gitbook/assets/DDB-noSQL.png" alt=""><figcaption></figcaption></figure>
+
+<figure><img src="../../../.gitbook/assets/NoSQLdbs.png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -49,7 +60,7 @@ icon: database
   * For **read capacity (RCUs)**:\
     One partition supports up to <mark style="color:red;">3000</mark> **strongly consistent RCUs** or **six thousand eventually consistent RCUs**.
 
-<figure><img src="../../.gitbook/assets/DDB-rcu-wcu.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/DDB-rcu-wcu.png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -103,6 +114,8 @@ icon: database
 
 * If <mark style="color:red;">`ProvisionedThroughputExceededException`</mark>already happened  -> **Use Retry Logic for Throttling**: Leverage the SDK's automatic retries for throttling errors, and **implement backoff strategies to avoid overwhelming the service.**
 * Use **DAX** if it is RCU issue
+
+<figure><img src="../../../.gitbook/assets/DDB-features.png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -313,7 +326,7 @@ If someone has already registered with the email, the system returns an error an
 
 
 
-<figure><img src="../../.gitbook/assets/DDB-chunk-large-item.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/DDB-chunk-large-item.png" alt=""><figcaption></figcaption></figure>
 
 * If you know to have **hot partition key or large object-** consider **Scatter-Gather ->** beak it into separate nodes and read/write  object in parallel chunks and **assemble it when reading**
   * **Scatter:**\
@@ -323,13 +336,13 @@ If someone has already registered with the email, the system returns an error an
 
 ### Hot & cold :cold\_face: data
 
-<figure><img src="../../.gitbook/assets/DDb-hot-cold-data.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/DDb-hot-cold-data.png" alt=""><figcaption></figcaption></figure>
 
 
 
 ### Optimistic Locking -> ensure data hasn't change -> write conditionally
 
-<figure><img src="../../.gitbook/assets/DDB-optimistic-lock.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/DDB-optimistic-lock.png" alt=""><figcaption></figcaption></figure>
 
 
 
