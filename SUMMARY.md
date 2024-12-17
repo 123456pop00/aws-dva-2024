@@ -38,11 +38,13 @@
 
 ## Security
 
+* [Data Security](security/data-security.md)
 * [System Manager](security/system-manager.md)
 * [IAM](security/iam/README.md)
   * [AWS STS](security/iam/aws-sts.md)
   * [Cognito](security/iam/cognito.md)
   * [AWS Directory services](security/iam/aws-directory-services.md)
+* [Page](security/page.md)
 * [Encryption](security/encryption.md)
 * [Useful CLI](security/useful-cli.md)
 

@@ -27,7 +27,13 @@ coverY: 0
 
 <figure><img src="../../../.gitbook/assets/NoSQLdbs.png" alt=""><figcaption></figcaption></figure>
 
+**DynamoDB** :key: Alias: aws/dynamodb\
+Encryption is **enabled by default using AWS-owned keys.**\
+If you want to use customer-managed keys (CMKs), you can switch the encryption keys, but you **cannot** "**disable**" encryption.
 
+**Aurora**:\
+Similar to RDS, you cannot encrypt an existing unencrypted Aurora DB cluster directly.\
+Use the snapshot-copy-restore process with encryption enabled.
 
 ## Primary Keys -> mandatory
 
@@ -122,6 +128,21 @@ coverY: 0
 ## Reads / Writes
 
 <table><thead><tr><th width="182"></th><th>READS</th><th>WRITES</th></tr></thead><tbody><tr><td><strong>API Calls</strong></td><td><code>GetItem</code>, <code>Query</code>, <code>Scan</code>, <code>BatchGetItem</code></td><td><code>PutItem</code>, <code>UpdateItem</code>, <code>DeleteItem</code>, <code>BatchWriteItem</code> and  for all operations, you must specify the <strong>primary key</strong> (<code>--key</code>) to identify the item being worked on.</td></tr><tr><td><strong>Batch Operations(</strong> for speed &#x26; simplicity)</td><td><strong><code>BatchGetItem</code></strong>: Retrieves multiple items by primary key.<br>Supports up to <strong>100 items or 16 MB</strong> per request.<br>Does not support filters or expressions. Items are retrieved in parallel. </td><td><p><strong><code>BatchWriteItem</code></strong>: Performs up to <strong>25</strong> <code>PutItem</code> or <code>DeleteItem</code> operations per request or 16 MB.<br>Cannot update items, only create or delete them. Can't do <mark style="color:red;"><code>UpdateItem</code> -> Atomicity Challenge (ie merge attributes, use counter).</mark> Use <strong><code>UpdateItem</code></strong> API for each item in a loop in your application. <mark style="color:red;"><code>UpdateItem call -> consumes entire WCU</code></mark> DynamoDB internally needs to read the entire item, modify it and write it back to disk, so you pay for the <strong>entire</strong> item, not the small part which you modified.  Even if you update just a subset of the item's attributes, <mark style="background-color:yellow;"><strong>UpdateItem will still consume the full amount of provisioned throughput.</strong></mark></p><p><br></p></td></tr><tr><td><strong>Transactional Mode</strong></td><td>Supports <code>TransactGetItems</code> for ACID-compliant reads.</td><td>Supports <code>TransactWriteItems</code> for ACID-compliant writes (combines multiple write operations).</td></tr><tr><td><strong>Performance</strong> </td><td><p><strong>RCU (Read Capacity Units)</strong>: </p><ul><li>Eventually consistent -> <strong>2</strong>  under 4 KB <strong>items</strong> = 1 RCU; </li><li>Strongly consistent -> <strong>1 item</strong> under 4 KB = 1 RCU.</li><li>Items over 4kb we round up to calculate <span data-gb-custom-inline data-tag="emoji" data-code="1f44d">👍</span><span data-gb-custom-inline data-tag="emoji" data-code="2757">❗</span></li></ul></td><td><strong>WCU (Write Capacity Units)</strong>: 1 write for 1 KB item = 1 WCU.</td></tr><tr><td><strong>Conditional Logic</strong></td><td><p><strong><code>KeyConditionExpression</code></strong> limits the number of items retrieved from the table. Mandatory PK. Used in specific operations like <code>GetItem</code>,</p><p></p><p><strong><code>FilterExpression</code></strong> only narrows down the results after the Query, so it doesn’t save RCUs.</p><p><strong><code>ProjectionExpression</code></strong> minimizes data transferred, saving network bandwidth but doesn’t reduce RCUs either.</p></td><td><p><strong>Atomic Operations</strong>: Conditions ensure operations are atomic, avoiding overwrites or race conditions.</p><p></p><p><strong>Do not replace the need for the primary key</strong></p><p> </p><p><strong><code>ConditionExpression</code></strong>: Common to all conditional writes: </p><ul><li>Existence (<code>attribute_exists</code>, <code>attribute_not_exists</code>)</li><li>Comparisons (<code>&#x3C;</code>, <code>></code>, <code>=</code>, etc.)</li><li>Logical operators (<code>AND</code>, <code>OR</code>, <code>NOT</code>)</li></ul></td></tr><tr><td>Indexes fro Flexibility</td><td>Supports <strong>Global Secondary Index (GSI)</strong> and <strong>Local Secondary Index (LSI)</strong> for querying with alternate key patterns.</td><td>GSIs support eventual consistency; LSIs must be strongly consistent.</td></tr></tbody></table>
+
+### GSI
+
+* **RCU/WCU**: GSIs have their own **read and write capacity**.
+*   **Consistency**: GSIs only support **eventual consistency** for reads, not strong consistency.
+
+
+
+### LSI
+
+* **LSI Consistency**: Supports both **strongly consistent reads** and **eventually consistent reads**.
+  * The consistency configuration of the base table **does not affect** how you read from the LSI.
+* **Capacity Sharing**: LSIs use the base table's RCUs and WCUs.
+
+
 
 ### Conditional Expressions
 

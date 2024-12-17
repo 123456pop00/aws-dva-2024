@@ -11,6 +11,9 @@ icon: database
 
 
 * Managed DB service for SQL, automatically scales, but we don't have ssh access, but get patching, provisioning.
+* **Aurora** and **RDS primary instances** provide **strong consistency** for all reads and writes.
+* **Replicas** for both Aurora and RDS are **eventually consistent**, as replication is asynchronous.\
+  For applications requiring **strongly consistent reads** at scale, query the primary instance or Aurora's shared storage layer directly.
 * Automatic host replacement
 * Automatic backups for PITR -> stored on s3 up to 35 days
   * **PITR** lets you restore your database to a specific point in time within the retention window.
@@ -30,7 +33,66 @@ icon: database
 * Stop & Start instances for up to 7 days
 * Resource-level IAM policies ( granular access for DEV db instances vs prod instances )&#x20;
 * If my  **EC2 instance** is in a **private subnet** and my **RDS instance** is in the **same VPC** (typically in a private subnet as well), they can communicate directly through the VPC’s **private IP. I only need Security Groups** to allow traffic between your EC2 instance and the RDS instance. For example, the security group of the EC2 instance allows outbound traffic on the MySQL port (e.g., 3306) and the RDS security group allows inbound traffic on that same port.
-* KMS for encryption at rest ( CMK) + TLS intransit
+
+## RDS Encryption
+
+* **Encryption Cannot Be Disabled**: Once encryption is enabled for an RDS instance, it cannot be disabled. You can, however, create a new encrypted instance and migrate data.
+* **Automatic Encryption for Snapshots and Backups**: When you create an encrypted RDS instance, all snapshots and backups taken from that instance are also encrypted. If you copy a snapshot to another region, it can be encrypted using your CMK
+* KMS for encryption at rest ( CMK) + TLS in transit
+
+**You cannot directly enable&#x20;**<mark style="background-color:red;">**encryption**</mark>**&#x20;for an existing unencrypted RDS DB instance? no**\
+Work around:
+
+1. Taking an unencrypted snapshot of the DB instance.
+2. Copying the snapshot and enabling encryption during the copy.
+3. Restoring the encrypted snapshot to create a new encrypted DB instance.
+4. **Once a database is encrypted, you cannot disable encryption** for that DB instance.
+
+#### **Can I Create an Encrypted Snapshot of an Unencrypted Volume or DB Instance?**
+
+* **Yes**, you can create an encrypted snapshot of an unencrypted DB instance or EBS volume by **copying the snapshot** and <mark style="background-color:red;">**enabling encryption during the copy operation.**</mark>
+  * For RDS: Copy the unencrypted snapshot and select encryption during the copy.
+  * For EBS: Same process—copy the unencrypted snapshot and encrypt it during the copy.
+
+#### How to encrypt READ replicas :bookmark\_tabs:?
+
+#### **Read Replicas in the Same AWS Region** :green\_circle: :green\_circle:
+
+* When you create the read replica, ensure that **the encryption option is inherited from the primary instance** (RDS will automatically create encrypted replicas).
+  * The Read Replica will **inherit the encryption settings and KMS key** from the source database.
+  * or inherit **SSE-RDS** as during the instance creation encryption is **enabled at rest by default**.
+* You **cannot use a different KMS key** for the Read Replica in the same region.
+  * Make sure that the necessary IAM roles allow replication to use the CMK.
+* All read replicas will be encrypted with the same encryption key used by the primary DB instance.
+
+#### **Read Replicas in a Different AWS Region** :green\_circle: :blue\_circle:
+
+For cross-region replication, with **SSE-RDS**, the replica uses default AWS-managed keys, but with **KMS-CMK**, you must copy the CMK to the target region and ensure permissions are set correctly.
+
+1. Enable **RDS Encryption** on the primary DB instance. The primary DB instance must have encryption enabled (SSE-RDS) in the source region.
+2.  **Enable Cross-Region Replication**.
+
+    * When creating a **cross-region read replica**, RDS will automatically ensure the replica is encrypted, but you cannot choose encryption keys because it uses the **default AWS-managed keys** (SSE-RDS).
+
+
+3. **Create Read Replica in the Target Region**. During the creation of the cross-region read replica, RDS will automatically encrypt the replica with the default AWS-managed encryption keys.
+4. The read replica in the target region is encrypted with **AWS-managed keys (SSE-RDS)**.
+
+#### For KMS:CMK
+
+1. Enable encryption with **KMS-CMK** on the primary DB instance.
+2. Create Read Replicas in target region and specify the KMS CMK that will be used for encryption in there.
+3. **Copy the CMK** to the target region before creating the replica, **as KMS keys are region-specific.** You will also need to ensure that both the source and target regions have access to the same CMK.
+   1. Billed for storing cmk in both regions
+   2. billed for encryption/decryption operations you perform in both regions
+   3. **Cannot be single-region CMK** the key is **only usable in the region** where it was created. You **cannot replicate it and single-region keys cannot be changed to multi-region**.&#x20;
+
+<mark style="background-color:green;">**For best practice**</mark><mark style="background-color:green;">: Use</mark> <mark style="background-color:green;"></mark><mark style="background-color:green;">**different CMKs**</mark> <mark style="background-color:green;"></mark><mark style="background-color:green;">in each region to ensure key isolation, security, and compliance.</mark>
+
+1. Make sure that the IAM role used for the replication has sufficient permissions to use the CMK in the target region.
+2. The read replica in the target region will use the same **KMS-CMK** as the primary DB instance.
+
+<figure><img src="../.gitbook/assets/Screenshot 2024-12-17 at 10.54.13.png" alt=""><figcaption></figcaption></figure>
 
 <figure><img src="../.gitbook/assets/TDE-encryption.png" alt=""><figcaption></figcaption></figure>
 
