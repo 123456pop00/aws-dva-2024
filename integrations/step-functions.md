@@ -4,24 +4,39 @@
 >
 > * JSON format for definitions with ASL ( Amazon Simple Lang) - task sequencing, so order matters :red\_circle:
 > * Offload error handling and retry logic from lambdas to keep them simple and not modify code
+> * Serverless function orchestrator that makes it easy to sequence Lambda functions and services together
+> * Visual interface allows to see checkpointed and event-driven workflows that maintain the application state. The output of one step acts as an input to the next :track\_next:
 
 ## ASL
 
-n the Amazon States Language, these fields filter and control the flow of JSON from state to state:
+Amazon States Language, these fields filter and control the flow of JSON from state to state
 
-\- **InputPath** (limit the input that is passed by filtering the JSON notation by using a path)
-
-\- **Parameters** (- pass a collection of key-value pairs, where the values are either static values that you define in your state machine definition, or that are selected from the input using a path.)
+* **States** are elements in your state machine. A state is referred to by its _name_, which can be any string, but must be unique within the scope of the entire state machine.
+  * **Task State** - Do some work in your state machine
+  * **Choice State** - Make a choice between branches of execution
+  * **Fail or Succeed State** - Stop execution with failure or success
+  * **Pass State** - Simply pass its input to its output or inject some fixed data, without performing work.
+  * **Wait State** - Provide a delay for a certain amount of time or until a specified time/date.
+  * **Parallel State** - Begin parallel branches of execution. This type of state should only be used when you want to run processes **asynchronously**.
+  * **Map State** - Dynamically iterate steps.
+* **InputPath** (limit the input that is passed by filtering the JSON notation by using a path)
+* **Parameters** - pass a collection of key-value pairs, where the values are either static values that you define in your state machine definition, or that are selected from the input using a path.
 
 _Step Functions applies the InputPath field first, and then the Parameters field. You can first filter your raw input to a selection you want using InputPath, and then apply Parameters to manipulate that input further, or add new values._
 
-\- OutputPath
-
-\- **ResultPath** ( The output of a state can be a copy of its input, the result it produces (for example, the output from a Task state’s Lambda function), or a combination of its input and result
+* **ResultPath** ( The output of a state can be a copy of its input, the result it produces (for example, the output from a Task state’s Lambda function), or a combination of its input and result
 
 
 
 <figure><img src="../.gitbook/assets/input-output-processing.png" alt=""><figcaption></figcaption></figure>
+
+## Debug Lambdas
+
+Break down lambda with timeout errors into 4 individual Step Functions states.
+
+Individual states can make decisions based on their input, perform actions, and pass output to other states.
+
+<figure><img src="../.gitbook/assets/Screenshot 2024-12-19 at 17.22.31.png" alt=""><figcaption></figcaption></figure>
 
 
 

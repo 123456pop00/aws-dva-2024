@@ -17,6 +17,9 @@
 * Each instance **type** offers a different balance of compute, memory, network, and storage resources.
 * According Responsibility **custom is responsible** for operating-system patches and updates on EC2 Instances.
 * IMDS v2 - need to obtain a token for Header as  `curl -H "X-aws-ec2-metadata-token:$TOKEN" http://169.254.169.254/latest/meta-data`[https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html)
+* A **launch template** is an instance configuration template that an Auto Scaling group uses to launch EC2 instances.Include the ID of the Amazon Machine Image (AMI), the instance type, a key pair, storage (EBS), Network (firewall, subnets), one or more security groups, and a block device mappin&#x67;**.**&#x20;
+  * **You can't modify a launch template after you've created it.**  You create a new versio nand versions are immutable.
+  * To change the launch template for an Auto Scaling group, you must create a launch template and then update your Auto Scaling group with it.
 
 ## EC2
 

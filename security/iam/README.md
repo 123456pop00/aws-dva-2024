@@ -21,6 +21,7 @@ icon: lock-keyhole
 * **IAM Access Advisor:** breaks down the permissions granted to a user, role, or group and when those services were last accessed. User level report that shows the **"Last Accessed"** time for each service, indicating when that service was last used by the entity.
 * IAM Access Analyser:&#x20;
 * **Best practice:** use temporary security credentials (for IAM roles) instead of generated **access keys.**
+  * Delete any access keys to your AWS account root user.
 * **Shared responsibility model for IAM:** User is responsible for MFA on accounts, appropriate permissions and policies.
 *   **Best practice:** for root and IAM users to use both password + MFA, rotate access keys.
 

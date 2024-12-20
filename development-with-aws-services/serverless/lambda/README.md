@@ -234,6 +234,16 @@ When you create your Lambda function, you specify configuration information, suc
 
 
 
+### Runtime
+
+**Custom runtime -** You can include a runtime in your function's deployment package in the form of an executable file named `bootstrap`.
+
+A runtime is responsible for running the function's setup code, reading the handler name from an environment variable, and reading invocation events from the Lambda runtime API. The runtime passes the event data to the function handler and posts the response from the handler back to Lambda.
+
+Your custom runtime runs in the standard Lambda execution environment. It can be a shell script, a script in a language that's included in Amazon Linux, or a binary executable file that's compiled in Amazon Linux.
+
+:red\_circle: Lambda has a deployment package size limit of 50 MB for direct upload (zipped file) and 250 MB for layers (unzipped).
+
 
 
 ### Parallelisation → to decrease time to complete
@@ -275,6 +285,26 @@ aws lambda create-function\
 \--zip-file fileb://function.zip
 
 </details>
+
+### Best practices :heartbeat:
+
+&#x20;\- Separate the Lambda handler (entry point) from your core logic.
+
+&#x20;\- Take advantage of Execution Context reuse to improve the performance of your function
+
+&#x20;\- Use AWS Lambda Environment Variables to pass operational parameters to your function.
+
+&#x20;\- Control the dependencies in your function's deployment package.&#x20;
+
+&#x20;\- Minimize your deployment package size to its runtime necessities.
+
+&#x20;\- Reduce the time it takes Lambda to unpack deployment packages
+
+&#x20;\- Minimize the complexity of your dependencies
+
+&#x20;\- Avoid using recursive code
+
+
 
 #### Useful Links
 

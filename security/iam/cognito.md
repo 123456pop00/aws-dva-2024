@@ -17,7 +17,7 @@ coverY: 0
   * **Free Tier**: 50,000 MAUs per month for CUP  and a generous amount of API calls (for most use cases).
   * **Paid Tier**: Beyond the free tier, you **pay for each additional MAU** and for API calls (sign-ups, logins, etc.). Pricing varies by region, but it typically starts at around **$0.0055 per MAU** (this can change based on region and the specific type of interaction).&#x20;
   * Sign-up, sign-in, and multi-factor authentication (MFA) API calls are usually priced at $0.03 per 1,000 API calls.
-* Social Login via Google, Fb, SAML, OpenID Connect
+* Social Login via Google, Fb, SAML, OpenID Connect or **developer-authenticated identities**
 * JWT support to validate user access to backend stuff
 * MFA support
 * Integrates with ALB (acts as reverse proxy)and API GW (offload validation)

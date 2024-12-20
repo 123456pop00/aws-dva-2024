@@ -341,16 +341,24 @@ Ciphertext Blob + New CMK ➡️ Re-Encrypt API ➡️ New Ciphertext Blob
 
 ## DEK
 
-* The **Data Encryption Key (DEK)** is a practical workaround for the 4KB encryption limit of KMS APIs since `Encrypt`, `Decrypt` can only handle data up to **4KB** directly.
+
+
+The **Data Encryption Key (DEK)** is a practical workaround for the 4KB encryption limit of KMS APIs since `Encrypt`, `Decrypt` can only handle data up to **4KB** directly.
 
 #### 🛠 APIs:
 
 1️⃣ **GenerateDataKey API**:
 
+The `GenerateDataKey` **generates a unique symmetric data** key :key: for client-side encryption. This operation returns a plaintext copy :page\_facing\_up: of the **data key** and a **copy that is encrypted** :no\_entry: **under** a CMK :closed\_lock\_with\_key: that you specify. You can use the plaintext key to encrypt your data outside of AWS KMS and store the encrypted data key with the encrypted data. You encrypt each file with its own DEK **before uploading it** to aws.
+
 * You get **two things**:
   * **Plaintext DEK** (used for encrypting your data).
   * **Encrypted DEK** (encrypted using your CMK, stays safe for later use).
 * The **CMK** (Customer Master Key) stays securely in KMS—it’s used to encrypt and decrypt the DEK, not the data itself.
+
+<figure><img src="../.gitbook/assets/dek-kms.png" alt=""><figcaption></figcaption></figure>
+
+
 
 ```bash
 #Call GenerateDataKey
@@ -414,7 +422,8 @@ Best for storing **secrets** like:
 
 
 * **Secrets Manager** can generate **SSL/TLS certificates** through **AWS Certificate Manager (ACM)** integration.&#x20;
-*
+
+
 
 
 

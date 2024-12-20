@@ -29,7 +29,8 @@ coverY: 0
 * To deploy a worker application that processes periodic background tasks, the application bundle must include a **cron.yaml**&#x20;
 * Beanstalk provides a **lifecycle policy** to manage application **versions** effectively, you can remove older application versions based on specific criteria:
   * **Time-based**: you can set a policy to discard versions that are older than a certain duration (e.g., 180 **days**).
-  * **Count-based**:  limit the total number of application versions stored (e.g., to a maximum of 200).
+  * **Count-based**:  limit the total number of application versions stored (e.g., to a maximum of 200). Minimum number that you can set for the application versions limit by total **count is 1.**
+  * **Can specify Retention for the** source bundle in S3.
   * Elastic Beanstalk can store a maximum of **1000** application versions. If older versions are not removed, you may be unable to deploy new iterations of your application.
   * Versions currently in use by your environments will not be deleted, r**egardless of the lifecycle policy.**
 * To deploy a new version of the application, package your application as a zip or war file and deploy it using eb deploy command.

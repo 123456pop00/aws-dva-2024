@@ -92,10 +92,95 @@ A hostname for an API in API Gateway that is deployed to a specific Region. The 
 
 ### **Offloading request validation**&#x20;
 
-* API GW handleS some of your basic validations, rather than making the call or building that validation into the backend.
-* API Gateway verifies :thumbsup:
+* API GW handles basic validations and rejects invalid requests **before** they reach your backend. It can  save the trip or building that validation into the backend.
+* API Gateway  checks for: :thumbsup:
   * required request parameters in the URL, query string, and headers of an incoming request are included and **non-blank**
-  * applicable request payload adheres to the configured JSON request model of the method :grey\_question:
+  * applicable request payload adheres to the configured JSON request model of the method, is it JSON? not reject immediately :grey\_question: **JSON Schema** model validation
+  * **Content-Type Validation**: is header `Content-Type`  matches the configured media type (e.g., `application/json`).
+
+### **How to Configure validation** :shield::&#x20;
+
+#### **Console Configuration**:
+
+1. In the **API Gateway Console**, select your API and the specific method (e.g., POST).
+2. Under **Method Request**, <mark style="background-color:yellow;">enable</mark> <mark style="background-color:yellow;"></mark><mark style="background-color:yellow;">**Request Validator**</mark><mark style="background-color:yellow;">.</mark>
+   * Options: Validate body, parameters, or both.
+3. Define a **Model** for the request payload:
+   * Navigate to **Models** in API Gateway.
+   * Add a **JSON Schema** for the expected payload.
+4. Associate the model with the method under the **Integration Request** or **Request Validator**.
+5. Configure error responses to customize rejection messages for invalid requests.
+
+#### **Swagger/OpenAPI JSON Configuration**:
+
+_Scalable, version-controlled, and ideal for automated deployments (e.g., using CloudFormation or CI/CD)._
+
+* **`x-amazon-apigateway-validators`**:
+  * Defines two validators:
+    * `validate-body-only`: Validates the request body but not parameters.
+    * `validate-everything`: Validates both body and parameters.
+* **`x-amazon-apigateway-request-validator`**:
+  * Associates the `validate-body-only` rule with the `/example` POST method.
+* **Schema Validation**:
+  * Ensures the request body matches the defined schema (e.g., `name` is required, `age` must be an integer ≥18).
+
+```jsonp
+// OpenAPI JSON snippet with request validation
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Example API",
+    "version": "1.0"
+  },
+  "paths": {
+    "/example": {
+      "post": {
+        "x-amazon-apigateway-request-validator": "validate-body-only",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "age": { "type": "integer", "minimum": 18 }
+                },
+                "required": ["name", "age"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    }
+  },
+  "x-amazon-apigateway-validators": {
+    "validate-body-only": {
+      "validateRequestBody": true,
+      "validateRequestParameters": false
+    },
+    "validate-everything": {
+      "validateRequestBody": true,
+      "validateRequestParameters": true
+    }
+  }
+}
+
+```
+
+1.  Import the API into API Gateway:
+
+    ```bash
+     codeaws apigateway import-rest-api --body file://your-api-definition.json
+    ```
+
+
+2. Deploy the API and test.
 
 
 
@@ -104,7 +189,9 @@ A hostname for an API in API Gateway that is deployed to a specific Region. The 
 ### REST&#x20;
 
 * REST APIs offer API proxy functionality and API management features in a single solution. REST APIs also offer API management features such as usage plans, API keys, publishing, and monetizing APIs
-* all-inclusive stateless with certififcates
+* all-inclusive stateless with certificates
+* If REST resources receive non-simple cross-origin HTTP requests ( Lambda custom (non-proxy) integration, HTTP custom (non-proxy) integration), you need to enable CORS, i.e. to specify which **methods in** **/resources are available to CORS requests.**&#x20;
+  * If using the  Console, API Gateway creates an `OPTIONS` method and attempts to add the `Access-Control-Allow-Origin` header to your existing method integration responses.
 
 ### HTTP
 
@@ -151,16 +238,16 @@ Test results include simulated CloudWatch logs. No data is actually written to C
 ### API Gateway has two types of CloudWatch logs built in
 
 1. Execution logs  ->   useful to troubleshoot APIs, but can result in logging sensitive data, it is recommended you **don't enable Log full requests/responses data for production API**
-2. Access logs -> provides details about who's invoking your API. This includes everything including IP address, the method used, the user protocol, and the agent.
+2. **Access logs -**> provides details about **who's invoking your API**. This includes everything including IP address, the method used, the user protocol, and the agent.
 
 <figure><img src="../../.gitbook/assets/apiGW-exec-logs.png" alt=""><figcaption></figcaption></figure>
 
-### **Calculating API Gateway overhead = Latency - IntegrationLatency**
+### **Calculating API Gateway overhead = (Latency - IntegrationLatency)**
 
 Two key metrics that are used to calculate the API Gateway overhead of deployed APIs are the **Latency** and **IntegrationLatency**.
 
 1. The latency metric gives you details about how long it takes for a <mark style="background-color:red;">**full round-trip response**</mark>, :fly: from the second your customer invokes your API to when your API responds with the results. This is a full round-trip duration of an API request through API Gateway.
-2. Integration latency is how long it takes for API Gateway to make the invocation to your backend and receive the response :clock730: :fax:
+2. Integration latency "backend latency " is how long it takes for API Gateway to make the invocation to your backend and receive the response :clock730: :fax:
 
 **The difference between these two metrics gives you your API Gateway overhead**
 
@@ -169,6 +256,8 @@ Two key metrics that are used to calculate the API Gateway overhead of deployed 
 ### **Simplify version management with stage variables -> r**etrieved dynamically at runtime
 
 As you define variables in the stage settings in the console, you can reference them with the **$stageVariables.\[variable name]** notation.&#x20;
+
+<div align="left"><figure><img src="../../.gitbook/assets/Screenshot 2024-12-18 at 12.24.34.png" alt="" width="375"><figcaption></figcaption></figure></div>
 
 You can also **inject stage-dependent items at runtime such as:**
 
@@ -209,18 +298,18 @@ You can also **inject stage-dependent items at runtime such as:**
 
 ### **Lambda** Authorizers :performing\_arts: 2 types -> token :coin: OR requestParams ( if you need more information about the request itself) :interrobang:
 
-#### - A Lambda Authorizer is a Lambda function that you can write to perform any custom authorization that you need.
+#### Token-based Authorizer type Lambda  - jwt or OAuth
 
-* &#x20;to support bearer token authentication strategies such as OAuth or SAML
+* &#x20;verifies support bearer **token** authentication  **such as OAuth or SAML, can check 3rd party, db**
 * if you use OAuth strategy as an organization, you may want to consider Lambda Authorizer
 * When a client calls your API, API Gateway verifies whether a Lambda Authorizer is configured for the API method
-* In this call, API Gateway supplies the **authorization** **token** (or the request parameters based on the type of authorizer), and the Lambda function returns a policy that allows or denies the caller’s req
-* Supports **an optional policy cache** for your Lambda Authorizer ->  increases performance by **reducing** invocations of your Lambda Authorizer **for previously authorized tokens**. With this cache, you can <mark style="background-color:red;">configure a custom TTL.</mark>
+* In a call API Gateway provides the **authorization** **token** and the Lambda checks token and returns a policy that allows or denies the caller’s req
+* Supports **an optional policy cache**  ->  increases performance by **reducing** invocations of your Lambda Authorizer **for previously authorized tokens**. You can <mark style="background-color:red;">configure a custom TTL.</mark>
 * API Gateway Lambda Authorizer **blueprint function**
 
 <figure><img src="../../.gitbook/assets/apiGW-token-lambdaAuth.png" alt=""><figcaption></figcaption></figure>
 
-**The Lambda function of the REQUEST authorizer type verifies the input request parameters and returns an Allow IAM policy on a specified method.**&#x20;
+&#x20;**REQUEST Authorizer type Lambda verifies** the input request parameters and returns an Allow IAM policy on a specified method.&#x20;
 
 <figure><img src="../../.gitbook/assets/apiGW-requestParams-lambdaAuth.png" alt=""><figcaption></figcaption></figure>
 

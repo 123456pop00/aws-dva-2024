@@ -15,7 +15,9 @@
    4. **`IntegrationLatency`** metrics helps you analyze the timeout issues between your API Gateway and a Lambda function, always smaller than **`Latency`** metrics as it it is = API overhead + IntegrationLatency
    5. **`CacheHitCount`** & **`CacheMissCount`** watch efficiency of the cache
 5. **Caching**: Enhances performance and reduces the load on your backend using caching at the API Gateway layer. 🌀
-   1. Clients invalidate cache with Http Header `Cache-Control: max-age=0`
+   1. Clients invalidate by including **`Cache-Control: max-age=0`** HTTP header on the API request
+      1. Must <mark style="color:red;">**have permission to invalidate**</mark> caching when there’s a request using the IAM execution role :exclamation::thumbsup:
+   2. **`Cache-Control: no-cache`** <mark style="color:red;">**is not valid when invalidating API Gateway cache.**</mark>
 6. **Flexible Integration Types**: Supports HTTP, HTTPS, and **WebSocket ( stateless)** protocols for real-time, two-way communication.
    1. Can define custom domain names and SSL/TLS certificates via Route53 to provided unified URL for different clients plug-in to different API endpoints, i.e. providing a branded API endpoint
       1. WebSocket API - same principal as with **wss:://**

@@ -178,6 +178,11 @@ When you provision your database with the Multi-AZ option, Amazon RDS automatica
 _<mark style="color:blue;">It's called a Multi-AZ DB instance deployment -> Reliable? Absolutely. Scalable? Not really.</mark>_
 
 * <mark style="color:blue;">SYNC</mark> replication to standby DB in another AZ ->  primary :crossed\_swords: database synchronously replicates the data to the **standby** instance (this ensures no data loss during failover), and  RDS automatically fails over to the standby instance if the primary instance fails -> good for :sunny: fault isolation :warning::exclamation: and HA **no reads from it** :scream\_cat:
+* **RDS applies OS updates by performing maintenance on the standby, then promoting the standby to primary, and finally performing maintenance on the old primary, which becomes the new standby**
+  * Run RDS applies operating system updates by as:
+    * Perform maintenance on the standby
+    * Promote the standby to primary.
+    * Perform maintenance on the old primary, which becomes the new standby.
 * Writes are only possible on the **primary instance**.
 * **Not meant for** read scaling or multi-region deployments.
 * No need to stop DB to enable ->  you modify and snapshot is taken and restored in anothe AZ, and synch mechanism is established

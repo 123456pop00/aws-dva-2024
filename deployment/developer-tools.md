@@ -84,5 +84,56 @@ When you create or update a CodeBuild project, you can specify the **location of
 
 
 
+## Appspec.yml
 
+The **`appspec.yml`** file in AWS CodeDeploy specifies how to deploy, its  components and supports lifecycle hooks are for executing custom scripts at different stages of deployment.
 
+<div align="left"><figure><img src="../.gitbook/assets/Screenshot 2024-12-19 at 17.42.03.png" alt="" width="375"><figcaption></figcaption></figure></div>
+
+**`files`**:
+
+Specifies the source and destination for files to be copied.:
+
+```yaml
+files:
+  - source: /src
+    destination: /var/www/html
+```
+
+**`permissions`** (optional): Specifies file permissions for copied files.
+
+```yaml
+permissions:
+  - object: /var/www/html
+    owner: ec2-user
+    group: www
+    mode: 755
+```
+
+**`hooks`**:
+
+Specifies lifecycle event hooks for running custom scripts at different stages
+
+```yaml
+hooks:
+  AfterInstall:
+    - location: scripts/install_dependencies.sh
+      timeout: 300
+      runas: root
+```
+
+| Hook                     | Desc:                                                                            | will throw an error whenever:                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`BeforeBlockTraffic`** | Runs before traffic is blocked from the instance (only for ECS/ELB deployments). | Misconfigured traffic routing or permissions issues may cause this hook to fail.                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **`BlockTraffic`**       | Runs after traffic is blocked (only for ECS/ELB deployments).                    | Issues communicating with the load balancer can trigger errors.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **`AfterBlockTraffic`**  | Runs after traffic has been blocked.                                             | Miscommunication between deployment components may lead to failures here.                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **`ApplicationStop`**    | Runs before the existing application is stopped on the instance.                 | Errors in the application shutdown script or locked processes can cause failure.                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **`DownloadBundle`**     | Automatically downloads the application revision (cannot be overridden).         | <p></p><ul><li>Missing or incorrect IAM role permissions to access the S3 bucket or application code repository.</li><li>The specified S3 bucket or file key is incorrect or inaccessible.</li><li>Network connectivity issues that prevent downloading the bundle.</li><li>The application revision doesn't exist (e.g., deleted or invalid path).</li><li> <strong>Cross-Region Issues</strong>: The resource is in a different AWS Region, and the service is unable to access it.</li></ul> |
+| **`BeforeInstall`**      | Runs before the application revision is installed.                               | Incorrect permissions or missing dependencies can cause this step to fail.                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **`Install`**            | Automatically copies application files to the target location (cannot override). | Disk space issues or file permission errors can disrupt this step.                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **`AfterInstall`**       | Runs after the application revision is installed.                                | File permission issues or post-install script errors may cause failures.                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **`ApplicationStart`**   | Runs after the new application starts.                                           | Failures typically occur due to misconfigured startup scripts or environment issues.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **`BeforeAllowTraffic`** | Runs before traffic is rerouted to the instance (only for ECS/ELB deployments).  | Misconfigured routing rules or load balancer issues can cause this to fail.                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **`AllowTraffic`**       | Runs after traffic is rerouted (only for ECS/ELB deployments).                   | Load balancer health check failures may disrupt this step.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **`AfterAllowTraffic`**  | Runs after traffic is allowed.                                                   | Errors can stem from unresolved routing or connectivity issues.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **`ValidateService`**    | Runs to validate that the deployment was successful.                             | Health check failures or misconfigured services are common sources of errors here.                                                                                                                                                                                                                                                                                                                                                                                                              |
