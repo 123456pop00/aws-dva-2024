@@ -24,8 +24,6 @@
 >
 >
 
-
-
 * CodeBuild can run any commands, so you can use it to run commands including build a static website and copy your static web files to an S3 bucket.
 * You can configure CodeBuild to run its build containers in a VPC, so they can access private resources in a VPC such as databases, internal load balancers, ..
 
@@ -59,6 +57,97 @@ When you create or update a CodeBuild project, you can specify the **location of
 * CodeBuild containers are deleted at the end of their execution (success or failure). You can't SSH into them, even while they're running.
 
 <figure><img src="../.gitbook/assets/codeBuildLog.png" alt=""><figcaption></figcaption></figure>
+
+## Buildspec.yml
+
+```yaml
+# The version of the buildspec file format.
+version: 0.2
+
+# Environment variables can be set here, which are available throughout the build process.
+env:
+  variables:
+    MY_ENV_VAR: "my-value" # Define a custom environment variable
+
+# Phases define the steps of the build lifecycle.
+phases:
+  # The install phase is for installing any dependencies or setting up the environment.
+  install:
+    commands:
+      - echo "Installing dependencies" # Print message indicating installation phase
+      - apt-get update # Update package list (for example, installing system packages)
+      - apt-get install -y curl # Install curl tool to download Docker installation script
+      - echo "Installing Docker..." # Print message indicating Docker installation
+      - curl -fsSL https://get.docker.com -o get-docker.sh # Fetch Docker installation script
+      - sh get-docker.sh # Run the script to install Docker
+    runtime-versions:
+      docker: 18 # Specify a runtime version for Docker (if needed)
+
+  # The pre_build phase runs before the actual build, useful for setup like login or checks.
+  pre_build:
+    commands:
+      - echo "Pre-build phase started" # Indicate that pre-build phase has started
+      - echo "Checking Docker version" # Check the version of Docker installed
+      - docker --version # Print the Docker version
+      - echo "Login to ECR" # Print message about logging into ECR (Elastic Container Registry)
+      # Use AWS CLI to log into ECR to push images to a private registry
+      - $(aws ecr get-login --no-include-email --region us-west-2)
+
+  # The build phase is where the main application logic happens (e.g., building Docker images, compiling code).
+  build:
+    commands:
+      - echo "Building Docker image" # Indicate build phase for Docker image
+      - docker build -t my-image . # Build the Docker image from the current directory
+      - echo "Tagging image" # Tagging the Docker image for ECR push
+      - docker tag my-image:latest 123456789012.dkr.ecr.us-west-2.amazonaws.com/my-repo:latest
+
+  # The post_build phase is executed after the build phase. Here, you can push artifacts or do other final tasks.
+  post_build:
+    commands:
+      - echo "Pushing Docker image to ECR" # Push the Docker image to ECR
+      - docker push 123456789012.dkr.ecr.us-west-2.amazonaws.com/my-repo:latest # Push the image
+      - echo "Build completed successfully!" # Indicate successful completion of the build
+
+  # The finally phase is an optional phase that runs after all the other phases, regardless of build success/failure.
+  finally:
+    commands:
+      - echo "Finally phase (always runs)" # Indicate that this phase will always run
+      - echo "Sending notification..." # Example of a notification step
+      # You could include code here to notify a system or send alerts (e.g., via SNS, Slack, etc.)
+
+# Artifacts section specifies the files to be outputted and stored in Amazon S3.
+artifacts:
+  files:
+    - '**/*' # Include all files in the current directory and subdirectories
+  discard-paths: yes # Discard directory structure during artifact upload (store only the files)
+
+# Cache section allows for caching dependencies between builds, reducing build time for repeat dependencies.
+cache:
+  paths:
+    - '/root/.m2/**/*' # Cache Maven dependencies (or other dependencies for your application)
+
+# Reports section defines the locations of test result files that should be uploaded to AWS CodeBuild.
+reports:
+  my_report:
+    files:
+      - '**/test-*.xml' # Collect test results with filenames starting with 'test-'
+    base-directory: 'test_results' # Specify directory where the test results are stored
+    discard-paths: yes # Discard directory structure for the test result files
+
+```
+
+* caching helps to **reduce build times** by storing commonly used build dependencies or intermediate build results - Caching node modules for a Node.js application, or Maven dependencies for a Java application.
+
+```yaml
+cache:
+  paths:
+    - '/root/.m2/**/*'    # Caching Maven dependencies
+    - '/root/.npm/**/*'   # Caching Node.js dependencies
+    - 'build/output/**/*' # Caching build outputs
+
+```
+
+
 
 
 
