@@ -27,6 +27,7 @@
   * [Lambda](development-with-aws-services/serverless/lambda/README.md)
     * [Synchronous Invocation](development-with-aws-services/serverless/lambda/page.md)
     * [Asynchronous invocaiton](development-with-aws-services/serverless/lambda/asynchronous-invocaiton.md)
+    * [Add custom layer](development-with-aws-services/serverless/lambda/add-custom-layer.md)
   * [DynamoDB](development-with-aws-services/serverless/dynamodb/README.md)
     * [DDB - Scans](development-with-aws-services/serverless/dynamodb/ddb-scans.md)
     * [DDB - Query](development-with-aws-services/serverless/dynamodb/ddb-query.md)

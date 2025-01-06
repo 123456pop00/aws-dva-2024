@@ -46,7 +46,7 @@ Resource Policy:
   "Id": "default",
   "Statement": [
     {
-      "Sid": "AWS-ALB_Invoke-targetgroup-lambda-alb-tg-demo-48117b14c66064f8",
+      "Sid": "AWS-ALB_Invoke-targetgroup-lambda-alb-tg-demo-48117b14c63066f8",
       "Effect": "Allow",
       "Principal": {
         "Service": "elasticloadbalancing.amazonaws.com"
