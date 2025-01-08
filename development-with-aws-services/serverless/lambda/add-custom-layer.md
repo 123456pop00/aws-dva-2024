@@ -1,8 +1,16 @@
 ---
 icon: layer-plus
+description: '-> Lambda layers must be uploaded in a zip format'
 ---
 
 # Add custom layer
+
+* **Lambda Layers**:  are immutable once created, a layer version cannot be modified.
+* Can be created with CDK but will be **destroyed (cdk destroy)** &  :no\_entry: :no\_entry: :no\_entry: doesn't provide a native retain policy for Lambda specifying a "retain"&#x20;
+* `removalPolicy` can't be set for Lambda or Layers i.e. like for S3 or DDB
+  * `const bucket = new s3.Bucket(this, "MyBucket", { removalPolicy: cdk.RemovalPolicy.RETAIN, });`
+* After creating a layer, you can export its ARN (via `cdk.CfnOutput`) and use it in future deployments.
+* Detach the Lambda Layer or Function from the CDK Stack / Manually / Separate Stack
 
 ## Adding layer for nodejs aws-sdk 📟 CloudShell
 
